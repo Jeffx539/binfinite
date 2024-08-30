@@ -263,73 +263,25 @@ filter "configurations:Debug"
 	defines {"DEBUG", "_DEBUG"}
 filter {}
 
--- project "common"
--- kind "StaticLib"
--- language "C++"
+prebuildcommands {"pushd %{_MAIN_SCRIPT_DIR}", "premake5 generate-buildinfo", "popd"}
 
--- files {"./src/common/**.hpp", "./src/common/**.cpp"}
+if _OPTIONS["copy-to"] then
+	postbuildcommands {"copy /y \"$(TargetPath)\" \"" .. _OPTIONS["copy-to"] .. "\""}
+end
 
--- includedirs {"./src/common", "%{prj.location}/src"}
-
--- resincludedirs {"$(ProjectDir)src"}
-
--- dependencies.imports()
-
--- project "runner"
--- kind "WindowedApp"
--- language "C++"
-
--- files {"./src/runner/**.rc", "./src/runner/**.hpp", "./src/runner/**.cpp", "./src/runner/resources/**.*"}
-
--- includedirs {"./src/runner", "./src/common", "%{prj.location}/src"}
-
--- resincludedirs {"$(ProjectDir)src"}
-
--- links {"common"}
-
--- dependencies.imports()
-
--- project "client"
--- kind "ConsoleApp"
--- language "C++"
-
--- targetname "h1-mod"
-
--- pchheader "std_include.hpp"
--- pchsource "src/client/std_include.cpp"
-
--- linkoptions {"/IGNORE:4254", "/DYNAMICBASE:NO", "/SAFESEH:NO", "/LARGEADDRESSAWARE", "/PDBCompress"}
-
--- files {"./src/client/**.rc", "./src/client/**.hpp", "./src/client/**.cpp", "./src/client/resources/**.*"}
-
--- includedirs {"./src/client", "./src/common", "%{prj.location}/src"}
-
--- resincludedirs {"$(ProjectDir)src"}
-
--- dependson {"tlsdll", "runner"}
-
--- links {"common"}
-
--- prebuildcommands {"pushd %{_MAIN_SCRIPT_DIR}", "tools\\premake5 generate-buildinfo", "popd"}
-
--- if _OPTIONS["copy-to"] then
--- 	postbuildcommands {"copy /y \"$(TargetPath)\" \"" .. _OPTIONS["copy-to"] .. "\""}
--- end
-
--- if _OPTIONS["debug-dir"] then
--- 	debugdir ( _OPTIONS["debug-dir"] )
--- end
-
-dependencies.imports()
 
 project "client"
 kind "SharedLib"
 language "C++"
+defines { "_CRT_SECURE_NO_WARNINGS" }
 
-files {"./src/*"}
+files {"./src/**.hpp", "./src/**.cpp"}
 
-includedirs {"./src/tlsdll", "%{prj.location}/src"}
-
-links {"common"}
+includedirs {"./src/common", "%{prj.location}/src"}
 
 resincludedirs {"$(ProjectDir)src"}
+
+dependencies.imports()
+
+group "Dependencies"
+dependencies.projects()
