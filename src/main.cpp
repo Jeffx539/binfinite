@@ -1,5 +1,6 @@
 #include "console.hpp"
 #include "engine/server.hpp"
+#include "engine/client.hpp"
 #include "environment.hpp"
 #include "exports.hpp"
 #include "patches.hpp"
@@ -84,6 +85,8 @@ void main()
                engine::server::SetupVariant(spl[1], spl[2]); 
            
            }
+
+     if (spl[0].compare(std::string("connect")) == 0) { engine::client::ServerConnect(spl[1]); }
 
 
         /*
