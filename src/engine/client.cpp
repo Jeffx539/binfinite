@@ -90,11 +90,16 @@ void ServerConnect(const std::string &address)
 
     static uint64_t id = 0;
 
-    add_to_server_list(reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4d154f0,
-      ipAddr,
-      computer_name,
-      query_perf_ctr());
-    connect_to_server(&id);
+    for (int i = 0; i < 5; i++) {
+        add_to_server_list(reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4d154f0,
+          ipAddr,
+          computer_name,
+          query_perf_ctr());
+        Sleep(1000);
+    }
+
+
+    //connect_to_server(&id);
 }
 
 }// namespace engine::client

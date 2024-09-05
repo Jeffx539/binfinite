@@ -1,6 +1,7 @@
 #include "console.hpp"
 #include "engine/server.hpp"
 #include "engine/client.hpp"
+#include "engine/lua.hpp"
 #include "environment.hpp"
 #include "exports.hpp"
 #include "patches.hpp"
@@ -34,14 +35,20 @@ void main()
     SetConsoleTitle("Binfinite");
     console::log("Binfinite %s", GIT_DESCRIBE);
 
-    Sleep(1000);
+    Sleep(2000);
+
     auto env = environment::IsServer() ? "SERVER" : "CLIENT";
     console::log("initialising mode: (%s) ...", env);
 
 
 
+
     // todo hoist this somewhere else
+
     patches::common::PatchEAC();
+
+    engine::shared::lua::InstallHooks();
+
 
     if (environment::IsServer()) {
             patches::server::PatchAddFTL();
@@ -89,19 +96,32 @@ void main()
      if (spl[0].compare(std::string("connect")) == 0) { engine::client::ServerConnect(spl[1]); }
 
 
-        /*
+        
         if (spl[0].compare(std::string("tickrate")) == 0) {
 
             if (spl.size() != 2) {
                 std::cout << "invalid args..  tickrate <val>" << std::endl;
             }
 
-            SetTickRate(std::stoi(spl[1]));
+            engine::server::UpdateTickRate(std::stoi(spl[1]));
         }
-        */
+        
+        if (spl[0].compare(std::string("lua_run")) == 0) {
 
+            if (spl.size() != 2) { std::cout << "invalid args..  lua_run <lua>" << std::endl; }
+            // BAD
+            engine::shared::lua::DoString(spl[1].c_str());
+        }
 
         if (spl[0].compare(std::string("unload")) == 0) { break; }
+
+
+
+
+
+
+
+
 
         std::cout << "> ";
     }

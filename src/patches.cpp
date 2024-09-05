@@ -52,6 +52,11 @@ namespace patches {
 
     namespace common {
 
+
+   
+
+
+
         void PatchEAC() { console::log("Patching EAC");
             uint8_t *addr = static_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x504a278;
             uint8_t *addr1 = static_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x504a230;

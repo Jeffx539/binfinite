@@ -26,7 +26,21 @@ namespace engine::server {
     };
 
 
+    void UpdateTickRate(uint64_t rate) {
+         
+        // cbf sigscanning this
+        uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
+        auto tick_sub_inner = (uint8_t * (__stdcall *)())(mod + 0x0538544);
+        auto tick_sub_outer = (uint8_t* (__stdcall *)(uint8_t *))(mod + 0x06c1ba8);
 
+        uint8_t *offs = tick_sub_outer(tick_sub_inner() + 0x28) + 0xe361c;
+
+
+        console::log("%p", offs);
+
+        *offs = rate;
+
+    }
 
 
 
