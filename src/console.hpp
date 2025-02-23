@@ -12,6 +12,7 @@ template<class... Args> void log(const char *format, Args... args)
 {
     printf(format, args...);
     printf("\n");
+    fflush(stdout);
 }
 
 

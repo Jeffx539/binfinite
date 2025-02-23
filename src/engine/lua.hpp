@@ -2,11 +2,12 @@
 
 #pragma once
 #include <cstdint>
-
+#include <string>
 namespace engine::shared::lua {
 
 void InstallHooks();
 uint64_t DoString(const char *string);
+void LuaOpen(const std::string path);
 static std::uintptr_t LuaState = 0;
 
 

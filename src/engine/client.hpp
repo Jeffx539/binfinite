@@ -1,9 +1,16 @@
 
 #pragma once
 #include <string>
+#include <WinSock2.h>
 
 namespace engine::client {
-void ServerConnect(const std::string &address);
 
+void AddServerToList(const std::string &server_name, unsigned long ip_address);
 
+//void AddServerToList(const std::string &server_name, const std::string &ip_address)
+//{
+//    unsigned long ip = inet_addr(ip_address.c_str());
+//    ip = ntohl(ip);
+//    AddServerToList(server_name, ip);
+//};
 }// namespace engine::client

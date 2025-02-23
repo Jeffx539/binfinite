@@ -17,6 +17,8 @@ void init()
         throw std::runtime_error("Failed to allocate consoles");
     }
 
+    //std::cout << ">";
+
 }
 
 

@@ -8,6 +8,9 @@
 
 namespace engine::server {
 
+static std::string server_name = "Halo Infinite Dedicated Server";
+
+
 void InstallHooks();
 void StartGame();
 void EndMode();

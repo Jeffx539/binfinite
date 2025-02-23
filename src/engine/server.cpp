@@ -67,17 +67,8 @@ namespace engine::server {
 	}
 
 
-	void InstallHooks() {
-            console::log("Installing Server Hooks");
-			void* set_lan_offs = static_cast<uint8_t*>(utils::memory::search(
-              "", "\x73\x59\x48\x8B\x45\xCC\x8B\xCB\x48\x0F\xA3\xC8\x73\x43\x4C\x8B\x3E", 0xCC))  - 0x46;
-            console::log("LAN Server %p", set_lan_offs);
 
 
-           //sv_set_lan_command_hook.create(set_lan_offs, &set_lan_command_stub);
-
-
-	}
         void *GetServerVar(const std::string var)
         {
             struct MaybeDatum
@@ -87,15 +78,27 @@ namespace engine::server {
                 char *name;// 0x1000
             };
 
+             
+            uint8_t *addr = static_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4939f10;
+            uint8_t *offs = reinterpret_cast<uint8_t *>((*reinterpret_cast<uint8_t **>(addr) + 0x53fd0)) + 0x18;
 
-            uint8_t *addr = static_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x48e0568;
-            uint8_t *offs = reinterpret_cast<uint8_t *>((*reinterpret_cast<uint8_t **>(addr) + 0x50ef8)) + 0x18;
             for (size_t i = 0; i < 27; i++) {
                 MaybeDatum **nice = reinterpret_cast<MaybeDatum **>((offs + i * 8));
                 if (std::string((*nice)->name) == var) { return nice; }
             }
             return nullptr;
         }
+
+                  void UpdateFTL()
+        {
+            uint8_t **var = reinterpret_cast<uint8_t **>(GetServerVar("lanFTLXuid"));
+            static uint64_t val = 1;
+            uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
+            auto func = (uint64_t * (__stdcall *)(void *, uint64_t *))(mod + 0x2ddcb88);// lan_update_lc
+            func(*var, &val);
+        }
+
+
 
     void FormatUUID(char *formatted, const std::string id)
     {
@@ -169,7 +172,7 @@ namespace engine::server {
         uint8_t **var = reinterpret_cast<uint8_t**>(GetServerVar("start-mode"));
         static uint64_t val = 1;
         uint8_t *mod = reinterpret_cast<uint8_t*>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-        auto func = (uint64_t * (__stdcall *)(void *, uint64_t *))(mod + 0x2d8ef58);
+        auto func = (uint64_t * (__stdcall *)(void *, uint64_t *))(mod + 0x2ddc904); // lan_update_var
 
 
         if (var != nullptr) { console::log("Starting Server");
@@ -182,13 +185,16 @@ namespace engine::server {
         uint8_t **var = reinterpret_cast<uint8_t **>(GetServerVar("end-game"));
         static uint64_t val = 1;
         uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-        auto func = (uint64_t * (__stdcall *)(void *, uint64_t *))(mod + 0x2d8f3a0);
+        auto func = (uint64_t * (__stdcall *)(void *, uint64_t *))(mod + 0x2ddcd4c);
 
         if (var != nullptr) {
             console::log("Ending Game");
             func(*var, &val);
         }
     }
+
+
+  
 
 
 
@@ -234,12 +240,23 @@ namespace engine::server {
         //serverconfighost = config["server"]["hostname"].value_or("Halo Binfinite Dedicated Server");
 
         auto gamevars = config["server"]["gamevariants"].as_array();
-
+        //server_name = config["server"]["hostname"].as_string()->get();
         g_serverConfig.game_variants = _load_variants(*config["server"]["gamevariants"].as_array());
         g_serverConfig.map_variants = _load_variants(*config["server"]["mapvariants"].as_array());
 
    /*     return serverconfig;*/
     }
 
+
+    	void InstallHooks()
+    {
+        console::log("Installing Server Hooks/Patches");
+        // void* set_lan_offs = static_cast<uint8_t*>(utils::memory::search(
+        //           "", "\x73\x59\x48\x8B\x45\xCC\x8B\xCB\x48\x0F\xA3\xC8\x73\x43\x4C\x8B\x3E", 0xCC))  - 0x46;
+        //         console::log("LAN Server %p", set_lan_offs);
+
+        UpdateFTL();
+        // sv_set_lan_command_hook.create(set_lan_offs, &set_lan_command_stub);
+    }
 
 }
