@@ -44,8 +44,11 @@ DWORD WINAPI ProbeThread(LPVOID params)
     WSAData data;
     WSAStartup(MAKEWORD(2, 2), &data);
 
+    unsigned long non_blocking = 1;
 
     SOCKET s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ioctlsocket(s, FIONBIO, &non_blocking);
+
     addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -69,16 +72,32 @@ DWORD WINAPI ProbeThread(LPVOID params)
     while (true) {
         const char *getservers = "\xff\xff\xff\xffgetservers ";
 
-
         if (environment::IsServer()) {
+
+
             std::string hb = std::string("\xff\xff\xff\xff\heartbeat ") + engine::server::server_name;
             sendto(s, hb.c_str(), strlen(hb.c_str()), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
 
         } else {
+
+
             int fromlen = sizeof(struct sockaddr_in);
             char buffer[1024];
+
+            if (!engine::client::IsServerSelectionOpen()) {
+                
+                Sleep(200);
+                continue;
+            }
+
+
             sendto(s, getservers, strlen(getservers), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
-            unsigned int bytes_recv = recvfrom(s, buffer, sizeof(buffer) - 1, 0, (struct sockaddr *)&recvdfrom,&fromlen);
+
+            int bytes_recv = recvfrom(s, buffer, sizeof(buffer) - 1, 0, (struct sockaddr *)&recvdfrom,&fromlen);
+            if (bytes_recv == SOCKET_ERROR) {
+                Sleep(2000);
+                continue;
+            }
 
 
             const char *response = "\xff\xff\xff\xffgetserversResponse ";
@@ -138,7 +157,6 @@ void main()
 
     patches::common::PatchEAC();
     //engine::shared::lua::InstallHooks();
-    CreateThread(NULL, 0, ProbeThread, NULL, 0, NULL);
 
 
     if (environment::IsServer()) {
@@ -154,6 +172,8 @@ void main()
 
     
     }
+    CreateThread(NULL, 0, ProbeThread, NULL, 0, NULL);
+
 
 
 
@@ -185,7 +205,7 @@ void main()
         if (spl[0].compare(std::string("hostname")) == 0) {
 
                if (spl.size() != 2) { std::cout << "invalid args..  hostname <val>" << std::endl; }
-               engine::server::server_name = spl[1];
+            engine::server::server_name = spl[1];
            }
 
         

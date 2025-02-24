@@ -5,10 +5,9 @@
 
 
 
-
 namespace engine::server {
 
-static std::string server_name = "Halo Infinite Dedicated Server";
+inline std::string server_name;
 
 
 void InstallHooks();
@@ -18,6 +17,7 @@ void FastRestart();
 void SetupVariant(const std::string map, const std::string gamemode);
 void UpdateTickRate(uint64_t rate);
 void ToggleFPSStats();
+
 
 struct Variant
 {

@@ -7,6 +7,8 @@ namespace engine::client {
 
 void AddServerToList(const std::string &server_name, unsigned long ip_address);
 float GetFrameRate();
+bool IsServerSelectionOpen();
+	
 void SetFrameRate(float frame_rate);
 //void AddServerToList(const std::string &server_name, const std::string &ip_address)
 //{

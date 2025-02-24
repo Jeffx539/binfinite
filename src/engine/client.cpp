@@ -15,6 +15,13 @@ namespace engine::client {
 
 
 
+    bool IsServerSelectionOpen() {
+
+        auto addr = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4D6F2A4;
+        return *reinterpret_cast<bool *>(addr);
+
+    }
+
 
     void SetFrameRate(float frame_rate) {
         auto rate = reinterpret_cast<uint8_t*>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4bccbdc;
