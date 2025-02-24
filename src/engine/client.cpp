@@ -13,6 +13,24 @@
 
 namespace engine::client {
 
+
+
+
+    void SetFrameRate(float frame_rate) {
+        auto rate = reinterpret_cast<uint8_t*>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4bccbdc;
+        *reinterpret_cast<float*>(rate) = frame_rate;
+
+    }
+
+    
+    float GetFrameRate()
+    {
+        auto rate = reinterpret_cast<uint8_t*>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4bccbdc;
+        return *reinterpret_cast<float *>(rate);
+    }
+
+
+
 	void AddServerToList(const std::string &server_name, unsigned long ip_address) {
 		std::wstring serv_name = std::wstring(L"\xd\xd\0") + std::wstring(server_name.begin(), server_name.end());
 

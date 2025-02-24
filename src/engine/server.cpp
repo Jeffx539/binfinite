@@ -9,6 +9,7 @@
 
 namespace engine::server {
 	utils::hooks::detour sv_set_lan_command_hook;
+    utils::hooks::detour sv_frame_info_hook;
 
 	// needs a better name
 	struct LanCommandRequest
@@ -29,16 +30,27 @@ namespace engine::server {
     void UpdateTickRate(uint64_t rate) {
          
         // cbf sigscanning this
-        uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-        auto tick_sub_inner = (uint8_t * (__stdcall *)())(mod + 0x0538544);
-        auto tick_sub_outer = (uint8_t* (__stdcall *)(uint8_t *))(mod + 0x06c1ba8);
+    /*    uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
+        auto tick_sub_inner = (uint8_t * (__stdcall *)())(mod + 0x043ff2c);
+        auto tick_sub_outer = (uint8_t * (__stdcall *)(uint8_t *))(mod + 0x043ff18);
 
-        uint8_t *offs = tick_sub_outer(tick_sub_inner() + 0x28) + 0xe361c;
+        uint8_t *offs = tick_sub_outer(tick_sub_inner() + 0x28) + 0xe363c;*/
+      /*  uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
+        auto override_tickrate = (void *(__stdcall *)(uint32_t))(mod + 0x05257e4);
+        override_tickrate(rate);*/
 
 
-        console::log("%p", offs);
+        auto en = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4dffe64;
+        *reinterpret_cast<char *>(en) = 1;
 
-        *offs = rate;
+
+        auto rater = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x50cf720;
+        *reinterpret_cast<uint32_t *>(rater) = rate;
+
+
+        //console::log("%p", offs);
+
+        //*offs = rate;
 
     }
 
@@ -65,9 +77,6 @@ namespace engine::server {
 
 		return sv_set_lan_command_hook.invoke<uint64_t>(var_array, arg2, command, arg4);
 	}
-
-
-
 
         void *GetServerVar(const std::string var)
         {
@@ -227,8 +236,17 @@ namespace engine::server {
         return result;
 
     }
+    uint64_t Hook_FrameInfo(FILE *arg1, char *str ,char *format, uint64_t a, uint64_t b, uint64_t c)
+    {
+        printf(str, format);
+        return sv_frame_info_hook.invoke<uint64_t>(arg1, str, format, a,b,c);
 
+    }
 
+    void ToggleFPSStats() {
+        auto stats = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4d636e0;
+        *stats = ~*stats;
+    }
 
 
 
@@ -236,27 +254,30 @@ namespace engine::server {
     {
 
         auto config = toml::parse_file(path);
-
-        //serverconfighost = config["server"]["hostname"].value_or("Halo Binfinite Dedicated Server");
-
         auto gamevars = config["server"]["gamevariants"].as_array();
-        //server_name = config["server"]["hostname"].as_string()->get();
+        server_name = config["server"]["hostname"].as_string()->value_or("Halo Infinite Dedicated Server");
         g_serverConfig.game_variants = _load_variants(*config["server"]["gamevariants"].as_array());
         g_serverConfig.map_variants = _load_variants(*config["server"]["mapvariants"].as_array());
 
    /*     return serverconfig;*/
     }
 
+  
 
-    	void InstallHooks()
+
+    void InstallHooks()
     {
         console::log("Installing Server Hooks/Patches");
         // void* set_lan_offs = static_cast<uint8_t*>(utils::memory::search(
         //           "", "\x73\x59\x48\x8B\x45\xCC\x8B\xCB\x48\x0F\xA3\xC8\x73\x43\x4C\x8B\x3E", 0xCC))  - 0x46;
         //         console::log("LAN Server %p", set_lan_offs);
+        // sv_set_lan_command_hook.create(set_lan_offs, &set_lan_command_stub);
 
         UpdateFTL();
-        // sv_set_lan_command_hook.create(set_lan_offs, &set_lan_command_stub);
+
+        std::uint8_t *module_base = reinterpret_cast<std::uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
+        sv_frame_info_hook.create(module_base + 0x2506b0c, &Hook_FrameInfo);
+
     }
 
 }

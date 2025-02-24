@@ -17,7 +17,7 @@ void EndMode();
 void FastRestart();
 void SetupVariant(const std::string map, const std::string gamemode);
 void UpdateTickRate(uint64_t rate);
-
+void ToggleFPSStats();
 
 struct Variant
 {

@@ -198,6 +198,23 @@ void main()
             engine::server::UpdateTickRate(std::stoi(spl[1]));
         }
         
+
+        if (spl[0].compare(std::string("fps")) == 0) {
+
+            if (spl.size() != 2) { std::cout << "invalid args..  fps <val>" << std::endl; }
+            engine::client::SetFrameRate(std::stof(spl[1]));
+        }
+
+
+        
+        if (spl[0].compare(std::string("fps_stats")) == 0) {
+
+            if (spl.size() != 2) { std::cout << "invalid args..  fps <val>" << std::endl; }
+            engine::server::ToggleFPSStats();
+        }
+
+
+
         if (spl[0].compare(std::string("lua_run")) == 0) {
 
             if (spl.size() != 2) { std::cout << "invalid args..  lua_run <lua>" << std::endl; }
@@ -211,13 +228,6 @@ void main()
             engine::shared::lua::LuaOpen(spl[1].c_str());
         }
         if (spl[0].compare(std::string("unload")) == 0) { break; }
-
-
-   /*     if (spl[0].compare(std::string("test")) == 0) {
-            engine::client::AddServerToList("Yeah the boys - Sydney", "45.255.112.22");
-            engine::client::AddServerToList("Yeah the boys - Melbourne", "45.255.112.23");
-        }*/
-
 
 
 
