@@ -9,6 +9,7 @@ namespace engine::server {
 
 inline std::string server_name;
 
+uint32_t GetTickRate();
 
 void InstallHooks();
 void StartGame();

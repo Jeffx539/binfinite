@@ -15,13 +15,12 @@ end
 
 function tomlplusplus.project()
 	project "tomlplusplus"
-		language "C"
+		language "C++"
 
-		minhook.includes()
+		tomlplusplus.includes()
 
 		files {
-			path.join(minhook.source, "src/**.h"),
-			path.join(minhook.source, "src/**.c"),
+			path.join(tomlplusplus.source, "src/**.cpp"),
 		}
 
 		warnings "Off"

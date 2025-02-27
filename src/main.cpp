@@ -2,6 +2,7 @@
 #include "engine/server.hpp"
 #include "engine/client.hpp"
 #include "engine/lua.hpp"
+#include "ui/hook.hpp"
 #include "environment.hpp"
 #include "exports.hpp"
 #include "patches.hpp"
@@ -12,8 +13,9 @@
 #include <ws2tcpip.h>
 
 
-
-#define MASTER_SERVER "binfinite.lh2.au"
+HANDLE mutex = nullptr;
+bool is_hooked = false;
+#define MASTER_SERVER "binfinitemaster.lh2.au"
 
 
 namespace client {
@@ -89,6 +91,13 @@ DWORD WINAPI ProbeThread(LPVOID params)
                 Sleep(200);
                 continue;
             }
+
+            // move out
+            if (!is_hooked) { is_hooked = true;
+                ui::hook::Init();
+            }
+
+
 
 
             sendto(s, getservers, strlen(getservers), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
@@ -168,7 +177,8 @@ void main()
     } else {
         // client codepath
         //patches::client::PatchIntro();
-
+        engine::server::UpdateTickRate(60);
+  
 
     
     }
@@ -271,6 +281,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,// handle to DLL module
     case DLL_PROCESS_ATTACH:
         // call main
         DisableThreadLibraryCalls(hinstDLL);
+        mutex = CreateMutexA(NULL, TRUE, "UniqueDLLInstanceMutex");
+        if (mutex == nullptr || GetLastError() == ERROR_ALREADY_EXISTS) {
+            if (mutex != nullptr) {
+                CloseHandle(mutex);
+                mutex = nullptr;
+            }
+            return FALSE;
+        }
+
+
+
         CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)client::main, hinstDLL, 0, nullptr);
         break;
 

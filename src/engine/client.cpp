@@ -16,9 +16,24 @@ namespace engine::client {
 
 
     bool IsServerSelectionOpen() {
+        auto addrt = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4f31492;
+        *reinterpret_cast<bool *>(addrt) = true;
 
         auto addr = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4D6F2A4;
         return *reinterpret_cast<bool *>(addr);
+
+
+        // data_144f31492
+
+
+
+    }
+
+
+    char* GetRTTString() {
+        auto addr = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4d3d8f0;
+
+       return reinterpret_cast<char *>(addr);
 
     }
 
@@ -34,6 +49,7 @@ namespace engine::client {
     {
         auto rate = reinterpret_cast<uint8_t*>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4bccbdc;
         return *reinterpret_cast<float *>(rate);
+        
     }
 
 
