@@ -15,9 +15,12 @@ namespace ui::hud {
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground  |ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
             | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize);
 
-        ImGui::Text("Binfinite %s, tickrate: %d %s",
+        ImGui::Text("Binfinite %s, input lat %.2fms, tickrate: %d %s",
           GIT_DESCRIBE,
-          engine::server::GetTickRate(), engine::client::GetRTTString());
+          engine::client::GetInputLat(),
+          engine::server::GetTickRate(),
+          engine::client::GetRTTString()
+        );
 
         ImGui::End();
 	}

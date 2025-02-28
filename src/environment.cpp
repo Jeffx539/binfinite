@@ -1,7 +1,7 @@
 
+#include "console.hpp";
 #include "environment.hpp"
 #include "utils/memory.hpp"
-#include "console.hpp";
 
 
 namespace environment {

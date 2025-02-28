@@ -2,7 +2,6 @@
 #include "utils/hooks.hpp"
 #include "utils/memory.hpp"
 
-
 namespace patches {
 
 	namespace common {

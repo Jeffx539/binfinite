@@ -1,11 +1,8 @@
 #pragma once
-#include <stdio.h>
-
+#include <cstdio>
 
 namespace console {
 static FILE *dummy = nullptr;
-
-
 void init();
 
 template<class... Args> void log(const char *format, Args... args)

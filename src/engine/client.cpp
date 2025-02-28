@@ -1,8 +1,7 @@
 
-
+#include "../console.hpp"
 #include "../utils/hooks.hpp"
 #include "../utils/memory.hpp"
-#include "../console.hpp"
 #include <WinSock2.h>
 
 #include "client.hpp"
@@ -28,6 +27,13 @@ namespace engine::client {
 
 
     }
+    float GetInputLat()
+    {
+        auto addrt = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4939e10;
+        return *reinterpret_cast<float *>(addrt);
+    }
+
+
 
 
     char* GetRTTString() {

@@ -1,5 +1,5 @@
-#include "lua.hpp"
 #include "../console.hpp"
+#include "lua.hpp"
 #include "../utils/hooks.hpp"
 #include "../utils/memory.hpp"
 #include <fstream>

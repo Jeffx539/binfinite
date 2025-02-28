@@ -3,6 +3,7 @@
 #include "engine/client.hpp"
 #include "engine/lua.hpp"
 #include "ui/hook.hpp"
+#include "command.hpp"
 #include "environment.hpp"
 #include "exports.hpp"
 #include "patches.hpp"
@@ -11,6 +12,7 @@
 #include <windows.h>
 #include <WinSock2.h>
 #include <ws2tcpip.h>
+
 
 
 HANDLE mutex = nullptr;
@@ -152,6 +154,8 @@ DWORD WINAPI ProbeThread(LPVOID params)
 }
 
 
+
+
 // main entrypoint for our client
 void main()
 {
@@ -183,88 +187,14 @@ void main()
     
     }
     CreateThread(NULL, 0, ProbeThread, NULL, 0, NULL);
-
-
-
-
-
-
-    // move this shit somewhere else and add command registration
-     for (std::string line; std::getline(std::cin, line);) {
-
-        std::vector<std::string> spl = split(line, ' ');
-       
-        if (spl[0].compare(std::string("map_start")) == 0) { engine::server::StartGame(); }
-
-
-        if (spl[0].compare(std::string("map_end")) == 0) { engine::server::EndMode(); }
-
-
-        if (spl[0].compare(std::string("fast_restart")) == 0) {
-
-            engine::server::FastRestart();
-        }
-
-           if (spl[0].compare(std::string("map")) == 0) { 
-               
-               engine::server::SetupVariant(spl[1], spl[2]); 
-           
-           }
-
-
-        if (spl[0].compare(std::string("hostname")) == 0) {
-
-               if (spl.size() != 2) { std::cout << "invalid args..  hostname <val>" << std::endl; }
-            engine::server::server_name = spl[1];
-           }
-
-        
-        if (spl[0].compare(std::string("tickrate")) == 0) {
-
-            if (spl.size() != 2) {
-                std::cout << "invalid args..  tickrate <val>" << std::endl;
-            }
-
-            engine::server::UpdateTickRate(std::stoi(spl[1]));
-        }
-        
-
-        if (spl[0].compare(std::string("fps")) == 0) {
-
-            if (spl.size() != 2) { std::cout << "invalid args..  fps <val>" << std::endl; }
-            engine::client::SetFrameRate(std::stof(spl[1]));
-        }
-
-
-        
-        if (spl[0].compare(std::string("fps_stats")) == 0) {
-
-            if (spl.size() != 2) { std::cout << "invalid args..  fps <val>" << std::endl; }
-            engine::server::ToggleFPSStats();
-        }
-
-
-
-        if (spl[0].compare(std::string("lua_run")) == 0) {
-
-            if (spl.size() != 2) { std::cout << "invalid args..  lua_run <lua>" << std::endl; }
-            // BAD
-            engine::shared::lua::DoString(spl[1].c_str());
-        }
-        if (spl[0].compare(std::string("lua_open")) == 0) {
-
-            if (spl.size() != 2) { std::cout << "invalid args..  lua_run <lua>" << std::endl; }
-            // BAD
-            engine::shared::lua::LuaOpen(spl[1].c_str());
-        }
-        if (spl[0].compare(std::string("unload")) == 0) { break; }
-
-
-
-
-
-        std::cout << "> ";
-    }
+    command::register_cmd("map_start", [](const std::vector<std::string> args) { engine::server::StartGame(); });
+    command::register_cmd("map_end", [](const std::vector<std::string> args) { engine::server::EndMode(); });
+    command::register_cmd("map", [](const std::vector<std::string> args) { engine::server::SetupVariant(args[0], args[1]); });
+    command::register_cmd("hostname", [](const std::vector<std::string> args) { engine::server::server_name = args[0]; });
+    command::register_cmd("tickrate", [](const std::vector<std::string> args) { engine::server::UpdateTickRate(std::stoi(args[0])); });
+    command::register_cmd("fps", [](const std::vector<std::string> args) { engine::client::SetFrameRate(std::stof(args[0])); });
+    command::register_cmd("fps_stats", [](const std::vector<std::string> args) { engine::server::ToggleFPSStats(); });
+    for (std::string line; std::getline(std::cin, line);) { command::process_command(line); }
 
 
 
