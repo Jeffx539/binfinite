@@ -1,18 +1,19 @@
+#include "command.hpp"
 #include "console.hpp"
-#include "engine/server.hpp"
 #include "engine/client.hpp"
 #include "engine/lua.hpp"
-#include "ui/hook.hpp"
-#include "command.hpp"
+#include "engine/server.hpp"
+#include "networking/rcon.hpp"
 #include "environment.hpp"
 #include "exports.hpp"
 #include "patches.hpp"
+#include "ui/hook.hpp"
 #include "version.h"
+#include <WinSock2.h>
 #include <iostream>
 #include <windows.h>
-#include <WinSock2.h>
 #include <ws2tcpip.h>
-
+#include <thread>
 
 
 HANDLE mutex = nullptr;
@@ -39,10 +40,8 @@ std::vector<std::string> split(const std::string &s, char seperator)
 }
 
 
-
-
 DWORD WINAPI ProbeThread(LPVOID params)
-{   
+{
     console::log("Starting Probe Thread");
     // move WSA Startup Somewhere else
     WSAData data;
@@ -89,22 +88,21 @@ DWORD WINAPI ProbeThread(LPVOID params)
             char buffer[1024];
 
             if (!engine::client::IsServerSelectionOpen()) {
-                
+
                 Sleep(200);
                 continue;
             }
 
             // move out
-            if (!is_hooked) { is_hooked = true;
+            if (!is_hooked) {
+                is_hooked = true;
                 ui::hook::Init();
             }
 
 
-
-
             sendto(s, getservers, strlen(getservers), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
 
-            int bytes_recv = recvfrom(s, buffer, sizeof(buffer) - 1, 0, (struct sockaddr *)&recvdfrom,&fromlen);
+            int bytes_recv = recvfrom(s, buffer, sizeof(buffer) - 1, 0, (struct sockaddr *)&recvdfrom, &fromlen);
             if (bytes_recv == SOCKET_ERROR) {
                 Sleep(2000);
                 continue;
@@ -115,45 +113,34 @@ DWORD WINAPI ProbeThread(LPVOID params)
             if (std::memcmp(response, buffer, strlen(response) != 0)) {
                 console::log("invalid Packet");
                 continue;
-             }
+            }
 
 
             // +1 remove first backslash
-          auto spl = split(std::string(buffer + strlen(response)+1, buffer + bytes_recv), '\\');
+            auto spl = split(std::string(buffer + strlen(response) + 1, buffer + bytes_recv), '\\');
 
-          struct
-          {
-              uint32_t ip_addr;
-              uint16_t port;
-              char hostname[256];
-          
-          } host;
+            struct
+            {
+                uint32_t ip_addr;
+                uint16_t port;
+                char hostname[256];
+
+            } host;
 
 
-          for (const auto &entry : spl) {
-              if (entry.rfind("EOT", 0) == 0) { break; }
-             std::memcpy(&host.ip_addr, entry.data(), sizeof(host.ip_addr));
-             std::memcpy(&host.port, entry.data()+4 , sizeof(host.port));
-             std::memcpy(&host.hostname, entry.data() + 6, entry.length()-6);
-             engine::client::AddServerToList(host.hostname, host.ip_addr);
-
-          }
-
+            for (const auto &entry : spl) {
+                if (entry.rfind("EOT", 0) == 0) { break; }
+                std::memcpy(&host.ip_addr, entry.data(), sizeof(host.ip_addr));
+                std::memcpy(&host.port, entry.data() + 4, sizeof(host.port));
+                std::memcpy(&host.hostname, entry.data() + 6, entry.length() - 6);
+                engine::client::AddServerToList(host.hostname, host.ip_addr);
+            }
         }
 
 
-
-
-
-
         Sleep(2000);
-    
     }
-
-
 }
-
-
 
 
 // main entrypoint for our client
@@ -169,35 +156,45 @@ void main()
     console::log("initialising mode: (%s) ...", env);
 
     patches::common::PatchEAC();
-    //engine::shared::lua::InstallHooks();
+    // engine::shared::lua::InstallHooks();
 
 
     if (environment::IsServer()) {
-            patches::server::GetServerOpModeFuncTable();
-            engine::server::InstallHooks();
-            engine::server::LoadServerConfig("./game/server.toml"); // hoist somewhere and make it part of the CLI +exec server.toml
+        
 
+        patches::server::GetServerOpModeFuncTable();
+        engine::server::InstallHooks();
+        engine::server::LoadServerConfig(
+          "./game/server.toml");// hoist somewhere and make it part of the CLI +exec server.toml
+       
+        std::thread t([]() {
+            networking::RCON rcon("justplaybro123");
+            rcon.listen();
 
+        });
+
+        t.detach();
     } else {
         // client codepath
-        //patches::client::PatchIntro();
+        // patches::client::PatchIntro();
         engine::server::UpdateTickRate(60);
-  
-
-    
     }
+
+
+
     CreateThread(NULL, 0, ProbeThread, NULL, 0, NULL);
     command::register_cmd("map_start", [](const std::vector<std::string> args) { engine::server::StartGame(); });
     command::register_cmd("map_end", [](const std::vector<std::string> args) { engine::server::EndMode(); });
-    command::register_cmd("map", [](const std::vector<std::string> args) { engine::server::SetupVariant(args[0], args[1]); });
-    command::register_cmd("hostname", [](const std::vector<std::string> args) { engine::server::server_name = args[0]; });
-    command::register_cmd("tickrate", [](const std::vector<std::string> args) { engine::server::UpdateTickRate(std::stoi(args[0])); });
-    command::register_cmd("fps", [](const std::vector<std::string> args) { engine::client::SetFrameRate(std::stof(args[0])); });
+    command::register_cmd(
+      "map", [](const std::vector<std::string> args) { engine::server::SetupVariant(args[0], args[1]); });
+    command::register_cmd(
+      "hostname", [](const std::vector<std::string> args) { engine::server::server_name = args[0]; });
+    command::register_cmd(
+      "tickrate", [](const std::vector<std::string> args) { engine::server::UpdateTickRate(std::stoi(args[0])); });
+    command::register_cmd(
+      "fps", [](const std::vector<std::string> args) { engine::client::SetFrameRate(std::stof(args[0])); });
     command::register_cmd("fps_stats", [](const std::vector<std::string> args) { engine::server::ToggleFPSStats(); });
     for (std::string line; std::getline(std::cin, line);) { command::process_command(line); }
-
-
-
 }
 }// namespace client
 
@@ -219,7 +216,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,// handle to DLL module
             }
             return FALSE;
         }
-
 
 
         CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)client::main, hinstDLL, 0, nullptr);

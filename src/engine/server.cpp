@@ -256,7 +256,7 @@ void LoadServerConfig(const std::string path)
     auto config = toml::parse_file(path);
     auto gamevars = config["server"]["gamevariants"].as_array();
     server_name = config["server"]["hostname"].as_string()->value_or("Binfinite Dedi");
-    console::log("Server Hostname %s", server_name);
+    console::log("Server Hostname %s", server_name.c_str());
     g_serverConfig.game_variants = _load_variants(*config["server"]["gamevariants"].as_array());
     g_serverConfig.map_variants = _load_variants(*config["server"]["mapvariants"].as_array());
 
