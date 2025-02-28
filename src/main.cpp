@@ -78,7 +78,7 @@ DWORD WINAPI ProbeThread(LPVOID params)
         if (environment::IsServer()) {
 
 
-            std::string hb = std::string("\xff\xff\xff\xff\heartbeat ") + engine::server::server_name;
+            std::string hb = std::string("\xff\xff\xff\xff\heartbeat ") + engine::server::g_serverConfig.host;
             sendto(s, hb.c_str(), strlen(hb.c_str()), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
 
         } else {
@@ -167,13 +167,17 @@ void main()
         engine::server::LoadServerConfig(
           "./game/server.toml");// hoist somewhere and make it part of the CLI +exec server.toml
        
-        std::thread t([]() {
-            networking::RCON rcon("justplaybro123");
-            rcon.listen();
 
-        });
+        if (engine::server::g_serverConfig.rcon_password != "") {
+            std::thread t([]() {
+                networking::RCON rcon(engine::server::g_serverConfig.rcon_password);
+                rcon.listen();
+            });
 
-        t.detach();
+            t.detach();
+        }
+
+
     } else {
         // client codepath
         // patches::client::PatchIntro();
@@ -188,7 +192,7 @@ void main()
     command::register_cmd(
       "map", [](const std::vector<std::string> args) { engine::server::SetupVariant(args[0], args[1]); });
     command::register_cmd(
-      "hostname", [](const std::vector<std::string> args) { engine::server::server_name = args[0]; });
+      "hostname", [](const std::vector<std::string> args) { engine::server::g_serverConfig.host = args[0]; });
     command::register_cmd(
       "tickrate", [](const std::vector<std::string> args) { engine::server::UpdateTickRate(std::stoi(args[0])); });
     command::register_cmd(

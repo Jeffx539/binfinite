@@ -7,7 +7,6 @@
 
 namespace engine::server {
 
-inline std::string server_name;
 
 uint32_t GetTickRate();
 
@@ -28,8 +27,9 @@ struct Variant
 
 struct ServerConfig
 {
-
+    std::string server_name;
     std::string host;
+    std::string rcon_password;
     uint16_t maxplayers;
 
 
@@ -40,7 +40,7 @@ struct ServerConfig
 };
 
 
-static ServerConfig g_serverConfig;
+inline ServerConfig g_serverConfig;
 
 
 

@@ -1,0 +1,30 @@
+[server]
+hostname = "Halo Dedicated Server"
+rcon_password = ""
+
+mapvariants = [
+
+    { name = "livefire", asset = "309253f8-7a75-48ff-83e1-e7fb3db2ac47", version = "1e090d33-3c65-4463-bf4c-41d79c0c6644" },
+    { name = "argyle", asset = "78677080-db7a-429e-84fe-f041d8342c37", version = "26e832a9-fedf-4d18-8705-6f1e214f5926" },
+    { name = "rig", asset = "654dff62-d618-496a-8914-06ab73d991e3", version = "5f4148bd-240b-40b1-aad3-140c69bee73c" },
+    { name = "plaza", asset = "4a5e5612-2b2e-4375-a0b3-9335a68815f3", version = "77cb9ec6-5456-4def-9858-c17367fb196c" },
+    { name = "pit", asset = "70dd38c5-2eb7-4db3-8901-0dfca292ff18", version = "51817144-eb2e-408a-be19-0f46d4746d93" },
+    { name = "aquarius", asset = "667072ae-ba00-4414-adda-8203e8c49295", version = "415e5d5e-191d-4591-9667-28e6f1b83c93" },
+    { name = "streets", asset = "e23ea388-9bcb-4180-a0dc-fbe987751b9e", version = "26d77007-363e-4acf-9a7c-f437a42ecda3" },
+    { name = "forbidden", asset = "5c215079-c34d-4d25-b86a-435e35edf188", version = "544a491b-cec8-42ad-b93f-85c755d13905" },
+    { name = "recharge", asset = "336b5174-3579-4fd8-b2f0-922e4a5f7628", version = "2e797a30-dad8-4236-8e1d-30c175435ca9" },
+
+
+]
+
+gamevariants = [
+
+    { name = "slayer", asset = "c2d20d44-8606-4669-b894-afae15b3524f", version = "0091d411-f90d-44a7-aac3-ccc7ff2b131f" },
+    { name = "3ctf", asset = "4cb279b7-a064-4df6-9058-02cdc6825d93", version = "1392d27e-e7e3-41d9-93f9-420c66cff577" },
+    { name = "5ctf", asset = "507191c6-a492-4331-b2ae-a172101eb23e", version = "ffd0ef4e-da75-42b0-93bb-ab44d4e6905b" },
+    { name = "koth", asset = "88c22b1f-2d64-48b9-bab1-26fe4721fb23", version = "43e75f3a-eee5-4147-b9d3-19782fac58f8" },
+    { name = "sh", asset = "22b8a0eb-0d02-4eb3-8f56-5f63fc254f83", version = "7a6d2582-284c-4728-bec9-118e32cd0cc0" },
+    { name = "ob", asset = "751bcc9d-aace-45a1-8d71-358f0bc89f7e", version = "227d4ffc-d67f-449a-8315-a1f82854d2ed" },
+
+
+]
