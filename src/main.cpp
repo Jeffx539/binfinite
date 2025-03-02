@@ -195,7 +195,7 @@ void main()
     command::register_cmd(
       "tickrate", [](const std::vector<std::string> args) { engine::server::UpdateTickRate(std::stoi(args[0])); });
     command::register_cmd(
-      "sv_setftl", [](const std::vector<std::string> args) { engine::server::UpdateFTL(std::stol(args[0])); });
+      "sv_setftl", [](const std::vector<std::string> args) { engine::server::UpdateFTL(std::stoull(args[0])); });
     command::register_cmd(
       "fps", [](const std::vector<std::string> args) { engine::client::SetFrameRate(std::stof(args[0])); });
     command::register_cmd("fps_stats", [](const std::vector<std::string> args) { engine::server::ToggleFPSStats(); });
