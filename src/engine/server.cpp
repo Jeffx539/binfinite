@@ -103,10 +103,10 @@ void *GetServerVar(const std::string var)
     return nullptr;
 }
 
-void UpdateFTL()
+void UpdateFTL(uint64_t value)
 {
     uint8_t **var = reinterpret_cast<uint8_t **>(GetServerVar("lanFTLXuid"));
-    static uint64_t val = 1;
+    static uint64_t val = value;
     uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
     auto func = (uint64_t *(__stdcall *)(void *, uint64_t *))(mod + 0x2ddcb88);// lan_update_lc
     func(*var, &val);

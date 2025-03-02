@@ -14,6 +14,7 @@ void InstallHooks();
 void StartGame();
 void EndMode();
 void FastRestart();
+void UpdateFTL(uint64_t value);
 void SetupVariant(const std::string map, const std::string gamemode);
 void UpdateTickRate(uint64_t rate);
 void ToggleFPSStats();
@@ -28,7 +29,6 @@ struct Variant
 struct ServerConfig
 {
     std::string server_name;
-    std::string host;
     std::string rcon_password;
     uint16_t maxplayers;
 
