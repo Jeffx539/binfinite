@@ -128,7 +128,7 @@ void Init_Print_Hook()
      VirtualProtect(a, 12, old_protect, &old_protect);
 
 
-    console::log("%p", &Hook_Print);
+    //console::log("%p", &Hook_Print);
 
 
 
@@ -145,7 +145,7 @@ void InstallHooks()
     std::uint8_t *module_base = reinterpret_cast<std::uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
     shared_lua_get_global.create(module_base + 0x0a70020, &Hook_GetGlobal);
     shared_lua_pcall.create(module_base + 0x0694634, &Hook_PCall);
-    shared_lua_loadbuffer.create(module_base + 0x09f5400, &Hook_LoadBuffer);
+    //shared_lua_loadbuffer.create(module_base + 0x09f5400, &Hook_LoadBuffer);
     shared_lua_register_func.create(module_base + 0x069210c, &Hook_RegisterLuaFunction);
 
 

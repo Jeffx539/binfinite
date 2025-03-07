@@ -3,17 +3,17 @@
 #include "engine/client.hpp"
 #include "engine/lua.hpp"
 #include "engine/server.hpp"
-#include "networking/rcon.hpp"
 #include "environment.hpp"
 #include "exports.hpp"
+#include "networking/rcon.hpp"
 #include "patches.hpp"
 #include "ui/hook.hpp"
 #include "version.h"
 #include <WinSock2.h>
 #include <iostream>
+#include <thread>
 #include <windows.h>
 #include <ws2tcpip.h>
-#include <thread>
 
 
 HANDLE mutex = nullptr;
@@ -73,71 +73,73 @@ DWORD WINAPI ProbeThread(LPVOID params)
     sockaddr_in recvdfrom;
 
     while (true) {
-        const char *getservers = "\xff\xff\xff\xffgetservers ";
+        //const char *getservers = "\xff\xff\xff\xffgetservers ";
 
         if (environment::IsServer()) {
 
-            std::string hb = std::string("\xff\xff\xff\xff\heartbeat ") + engine::server::g_serverConfig.server_name.c_str();
+            std::string hb =
+              std::string("\xff\xff\xff\xff\heartbeat ") + engine::server::g_serverConfig.server_name.c_str();
             sendto(s, hb.c_str(), strlen(hb.c_str()), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
-
-        } else {
-
-
-            int fromlen = sizeof(struct sockaddr_in);
-            char buffer[1024];
-
-            if (!engine::client::IsServerSelectionOpen()) {
-
-                Sleep(200);
-                continue;
-            }
-
-            // move out
-            if (!is_hooked) {
-                is_hooked = true;
-                ui::hook::Init();
-            }
-
-
-            sendto(s, getservers, strlen(getservers), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
-
-            int bytes_recv = recvfrom(s, buffer, sizeof(buffer) - 1, 0, (struct sockaddr *)&recvdfrom, &fromlen);
-            if (bytes_recv == SOCKET_ERROR) {
-                Sleep(2000);
-                continue;
-            }
-
-
-            const char *response = "\xff\xff\xff\xffgetserversResponse ";
-            if (std::memcmp(response, buffer, strlen(response) != 0)) {
-                console::log("invalid Packet");
-                continue;
-            }
-
-
-            // +1 remove first backslash
-            auto spl = split(std::string(buffer + strlen(response) + 1, buffer + bytes_recv), '\\');
-
-            struct
-            {
-                uint32_t ip_addr;
-                uint16_t port;
-                char hostname[256];
-
-            } host;
-
-
-            for (const auto &entry : spl) {
-                if (entry.rfind("EOT", 0) == 0) { break; }
-                std::memcpy(&host.ip_addr, entry.data(), sizeof(host.ip_addr));
-                std::memcpy(&host.port, entry.data() + 4, sizeof(host.port));
-                std::memcpy(&host.hostname, entry.data() + 6, entry.length() - 6);
-                engine::client::AddServerToList(host.hostname, host.ip_addr);
-            }
         }
+        //    } else {
 
 
-        Sleep(2000);
+        //        int fromlen = sizeof(struct sockaddr_in);
+        //        char buffer[1024];
+
+        //        if (!engine::client::IsServerSelectionOpen()) {
+
+        //            Sleep(200);
+        //            continue;
+        //        }
+
+        //        // move out
+        //        if (!is_hooked) {
+        //            is_hooked = true;
+        //            ui::hook::Init();
+        //        }
+
+
+        //        sendto(s, getservers, strlen(getservers), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
+
+        //        int bytes_recv = recvfrom(s, buffer, sizeof(buffer) - 1, 0, (struct sockaddr *)&recvdfrom, &fromlen);
+        //        if (bytes_recv == SOCKET_ERROR) {
+        //            Sleep(2000);
+        //            continue;
+        //        }
+
+
+        //        const char *response = "\xff\xff\xff\xffgetserversResponse ";
+        //        if (std::memcmp(response, buffer, strlen(response) != 0)) {
+        //            console::log("invalid Packet");
+        //            continue;
+        //        }
+
+
+        //        // +1 remove first backslash
+        //        auto spl = split(std::string(buffer + strlen(response) + 1, buffer + bytes_recv), '\\');
+
+        //        struct
+        //        {
+        //            uint32_t ip_addr;
+        //            uint16_t port;
+        //            char hostname[256];
+
+        //        } host;
+
+
+        //        for (const auto &entry : spl) {
+        //            if (entry.rfind("EOT", 0) == 0) { break; }
+        //            std::memcpy(&host.ip_addr, entry.data(), sizeof(host.ip_addr));
+        //            std::memcpy(&host.port, entry.data() + 4, sizeof(host.port));
+        //            std::memcpy(&host.hostname, entry.data() + 6, entry.length() - 6);
+        //            engine::client::AddServerToList(host.hostname, host.ip_addr);
+        //        }
+        //    }
+
+
+        //    Sleep(2000);
+        //}
     }
 }
 
@@ -155,17 +157,17 @@ void main()
     console::log("initialising mode: (%s) ...", env);
 
     patches::common::PatchEAC();
-    // engine::shared::lua::InstallHooks();
+    engine::shared::lua::InstallHooks();
 
 
     if (environment::IsServer()) {
-        
+
 
         patches::server::GetServerOpModeFuncTable();
         engine::server::InstallHooks();
         engine::server::LoadServerConfig(
           "./game/server.toml");// hoist somewhere and make it part of the CLI +exec server.toml
-       
+
 
         if (engine::server::g_serverConfig.rcon_password != "") {
             std::thread t([]() {
@@ -180,9 +182,9 @@ void main()
     } else {
         // client codepath
         // patches::client::PatchIntro();
+        engine::client::Init();
         engine::server::UpdateTickRate(60);
     }
-
 
 
     CreateThread(NULL, 0, ProbeThread, NULL, 0, NULL);
@@ -199,25 +201,17 @@ void main()
     command::register_cmd(
       "fps", [](const std::vector<std::string> args) { engine::client::SetFrameRate(std::stof(args[0])); });
     command::register_cmd("fps_stats", [](const std::vector<std::string> args) { engine::server::ToggleFPSStats(); });
-    for (std::string line; std::getline(std::cin, line);) {
-        command::process_command(line);
-    }
-
-
-    command::register_cmd("debug_connect", [](const std::vector<std::string> args) { 
-        auto mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-        auto something_change_session_state =
-          (void * (__stdcall *)(char arg1, char arg2, char arg3, char arg4, const char* arg5, char arg6))(
-            mod + 0x08c9ebc);
-
-        something_change_session_state(1, 2, 4, 4, "ClientPreGameJoinThunderheadServer", 0x22);
+    command::register_cmd(
+      "connect", [](const std::vector<std::string> args) { engine::client::ConnectToServer(args[0]); });
+    command::register_cmd(
+      "lua_run", [](const std::vector<std::string> args) { engine::shared::lua::DoString(args[0].c_str()); });
 
 
 
+    for (std::string line; std::getline(std::cin, line);) { command::process_command(line); }
 
-        
-        
-    });
+
+  
 }
 }// namespace client
 

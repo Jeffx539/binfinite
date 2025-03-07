@@ -1,6 +1,7 @@
 #include "dx12.hpp"
 #include "../console.hpp"
 #include "hud.hpp"
+#include "menu.hpp"
 #include "hook.hpp"
 
 
@@ -136,6 +137,7 @@ static HRESULT WINAPI hkResizeBuffers(IDXGISwapChain *pSwapChain,
   UINT SwapChainFlags)
 {
     CleanupRenderTarget();
+    console::log("w %d h %d", Width, Height);
 
     return oResizeBuffers(pSwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
 }
@@ -153,7 +155,7 @@ static HRESULT WINAPI hkResizeBuffers1(IDXGISwapChain3 *pSwapChain,
   IUnknown *const *ppPresentQueue)
 {
     CleanupRenderTarget();
-
+    console::log("w %d h %d", Width, Height);
     return oResizeBuffers1(
       pSwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags, pCreationNodeMask, ppPresentQueue);
 }
@@ -435,6 +437,11 @@ static void RenderImGui_DX12(IDXGISwapChain3 *pSwapChain)
             ImGui::NewFrame();
 
             ui::hud::Draw();
+
+            if (ui::menu::draw) { ui::menu::Draw();}
+
+
+
 
             ImGui::Render();
 

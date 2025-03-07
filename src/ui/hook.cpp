@@ -1,6 +1,8 @@
 
 #include "dx12.hpp"
 #include "hook.hpp"
+#include "menu.hpp"
+#include "../console.hpp"
 
 namespace ui::hook {
 
@@ -42,15 +44,14 @@ static WNDPROC oWndProc;
 static LRESULT WINAPI WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if (uMsg == WM_KEYDOWN) {
-        if (wParam == VK_INSERT) {
-            return 0;
-        } else if (wParam == VK_HOME) {
+        if (wParam == VK_OEM_3 || wParam == VK_INSERT) {
+            ui::menu::draw = !ui::menu::draw;
             return 0;
         }
     }
 
     LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    //if (Menu::shouldShowMenu) { ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam); }
+    if (ui::menu::draw) { ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam); }
 
     return CallWindowProc(oWndProc, hWnd, uMsg, wParam, lParam);
 }
@@ -66,6 +67,11 @@ static LRESULT WINAPI WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     ImGuiIO &io = ImGui::GetIO();
     //io.Fonts->AddFontDefault();
     auto font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 32.0f);
+
+
+
+
+
     io.Fonts->Build();
 
     //ImGui::PushFont(font);
