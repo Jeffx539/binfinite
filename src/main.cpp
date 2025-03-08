@@ -2,8 +2,10 @@
 #include "console.hpp"
 #include "engine/client.hpp"
 #include "engine/lua.hpp"
+#include "engine/shared.hpp"
 #include "engine/server.hpp"
 #include "environment.hpp"
+
 #include "exports.hpp"
 #include "networking/rcon.hpp"
 #include "patches.hpp"
@@ -42,104 +44,19 @@ std::vector<std::string> split(const std::string &s, char seperator)
 
 DWORD WINAPI ProbeThread(LPVOID params)
 {
-    console::log("Starting Probe Thread");
-    // move WSA Startup Somewhere else
-    WSAData data;
-    WSAStartup(MAKEWORD(2, 2), &data);
-
-    unsigned long non_blocking = 1;
-
-    SOCKET s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    ioctlsocket(s, FIONBIO, &non_blocking);
-
-    addrinfo hints, *res;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-
-    if (getaddrinfo(MASTER_SERVER, NULL, &hints, &res) != 0) {
-        throw("Failed to Get DNS for %s", MASTER_SERVER);
-        return 1;
-    }
-
-    sockaddr_in *ipv4 = (sockaddr_in *)res->ai_addr;
-    char ipstr[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(ipv4->sin_addr), ipstr, INET_ADDRSTRLEN);
-
-    sockaddr_in dest;
-    dest.sin_family = AF_INET;
-    dest.sin_port = htons(7676);
-    dest.sin_addr = ipv4->sin_addr;
     sockaddr_in recvdfrom;
 
     while (true) {
-        //const char *getservers = "\xff\xff\xff\xffgetservers ";
 
         if (environment::IsServer()) {
-
             std::string hb =
-              std::string("\xff\xff\xff\xff\heartbeat ") + engine::server::g_serverConfig.server_name.c_str();
-            sendto(s, hb.c_str(), strlen(hb.c_str()), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
+            std::string("\xff\xff\xff\xff\heartbeat ") + engine::server::g_serverConfig.server_name.c_str();
+            engine::shared::GameSocketSend(std::string(MASTER_SERVER), 7676, hb);
+            console::log("sending server heartbeat to %s", MASTER_SERVER);
+           
         }
-        //    } else {
+        Sleep(30000);
 
-
-        //        int fromlen = sizeof(struct sockaddr_in);
-        //        char buffer[1024];
-
-        //        if (!engine::client::IsServerSelectionOpen()) {
-
-        //            Sleep(200);
-        //            continue;
-        //        }
-
-        //        // move out
-        //        if (!is_hooked) {
-        //            is_hooked = true;
-        //            ui::hook::Init();
-        //        }
-
-
-        //        sendto(s, getservers, strlen(getservers), 0, (struct sockaddr *)&dest, sizeof(struct sockaddr_in));
-
-        //        int bytes_recv = recvfrom(s, buffer, sizeof(buffer) - 1, 0, (struct sockaddr *)&recvdfrom, &fromlen);
-        //        if (bytes_recv == SOCKET_ERROR) {
-        //            Sleep(2000);
-        //            continue;
-        //        }
-
-
-        //        const char *response = "\xff\xff\xff\xffgetserversResponse ";
-        //        if (std::memcmp(response, buffer, strlen(response) != 0)) {
-        //            console::log("invalid Packet");
-        //            continue;
-        //        }
-
-
-        //        // +1 remove first backslash
-        //        auto spl = split(std::string(buffer + strlen(response) + 1, buffer + bytes_recv), '\\');
-
-        //        struct
-        //        {
-        //            uint32_t ip_addr;
-        //            uint16_t port;
-        //            char hostname[256];
-
-        //        } host;
-
-
-        //        for (const auto &entry : spl) {
-        //            if (entry.rfind("EOT", 0) == 0) { break; }
-        //            std::memcpy(&host.ip_addr, entry.data(), sizeof(host.ip_addr));
-        //            std::memcpy(&host.port, entry.data() + 4, sizeof(host.port));
-        //            std::memcpy(&host.hostname, entry.data() + 6, entry.length() - 6);
-        //            engine::client::AddServerToList(host.hostname, host.ip_addr);
-        //        }
-        //    }
-
-
-        //    Sleep(2000);
-        //}
     }
 }
 
@@ -158,6 +75,7 @@ void main()
 
     patches::common::PatchEAC();
     engine::shared::lua::InstallHooks();
+    engine::shared::networking::InstallHooks();
 
 
     if (environment::IsServer()) {

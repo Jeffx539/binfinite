@@ -2,8 +2,10 @@
 #include <string>
 #include <vector>
 #include "../command.hpp"
+#include "../console.hpp"
 #include "../engine/server.hpp"
 #include "../engine/client.hpp"
+#include "../engine/shared.hpp"
 namespace ui::menu {
 
 
@@ -14,9 +16,6 @@ struct Servers
     std::string ip_addr;
 } ;
 
-
-std::vector<Servers> s = { { .region = "Australia", .name = "Sydney Supermax",.ip_addr = "103.214.222.1" },
-    { .region = "Australia", .name = "Linux Melbourne SuperMAX! 128 Tick",  .ip_addr = "139.84.198.114" } };
 
 
 
@@ -35,38 +34,46 @@ void Draw()
 
     ImGui::SeparatorText("Server Browser");
 
-    if (ImGui::BeginTable("server browser",3, ImGuiTableFlags_Borders)) {
+    if (ImGui::BeginTable("server browser",
+          5,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersV | ImGuiTableFlags_BordersOuterV
+            | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersH | ImGuiTableFlags_BordersOuterH
+            | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_Resizable)) {
         // Submit columns name with TableSetupColumn() and call TableHeadersRow() to create a row with a header in each
         // column. (Later we will show how TableSetupColumn() has other uses, optional flags, sizing weight etc.)
-        ImGui::TableSetupColumn("Region");
-        ImGui::TableSetupColumn("Server Name");
-        ImGui::TableSetupColumn("");
+        ImGui::TableSetupColumn("Server Name", ImGuiTableColumnFlags_WidthStretch, 0.4f);
+        ImGui::TableSetupColumn("Slots", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+        ImGui::TableSetupColumn("Game", ImGuiTableColumnFlags_WidthStretch, 0.2f);
+        ImGui::TableSetupColumn("Ping", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+        ImGui::TableSetupColumn("",ImGuiTableColumnFlags_WidthStretch, 0.2f);
 
         ImGui::TableHeadersRow();
 
         unsigned int uid = 0;
-        for (auto& row : s) {
+        for (auto& row : engine::shared::networking::servers_) {
+            if (!row.second.query_complete) continue;
+
              ImGui::PushID(uid++);
              ImGui::TableNextRow();
-            
-             if(ImGui::TableSetColumnIndex(0))
-                ImGui::TextUnformatted(row.region.c_str());
 
-             if (ImGui::TableSetColumnIndex(1))
-                 ImGui::TextUnformatted(row.name.c_str());
-
-             if (ImGui::TableSetColumnIndex(2)) {
-                 if (ImGui::SmallButton("Connect")) { command::process_command("connect " + row.ip_addr); }
+             if (ImGui::TableSetColumnIndex(0)) ImGui::TextUnformatted(row.second.props["hostname"].c_str());
+             if (ImGui::TableSetColumnIndex(1)) ImGui::TextUnformatted("0/32");
+             if (ImGui::TableSetColumnIndex(2)) ImGui::TextUnformatted("aquarius/slayer ctf");
+             if (ImGui::TableSetColumnIndex(3)) ImGui::Text("%d ms", row.second.ping);
+             if (ImGui::TableSetColumnIndex(4)) {
+                 if (ImGui::SmallButton("Connect")) { command::process_command("connect " + row.second.addr.ip); }
              }
 
             ImGui::PopID();
         }
 
-
+    
 
         ImGui::EndTable();
     }
-
+    if (ImGui::SmallButton("Refresh Server List")) {
+        engine::shared::GameSocketSend("binfinitemaster.lh2.au", 7676, "\xff\xff\xff\xffgetservers INFINITE");
+    }
 
 
 
