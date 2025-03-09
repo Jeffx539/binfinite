@@ -438,7 +438,19 @@ static void RenderImGui_DX12(IDXGISwapChain3 *pSwapChain)
 
             ui::hud::Draw();
 
-            if (ui::menu::draw) { ui::menu::Draw();}
+            if (ui::menu::draw) {
+            
+                // todo move this out of here as an optimisation
+                DXGI_SWAP_CHAIN_DESC swapChainDesc;
+                HRESULT hr = pSwapChain->GetDesc(&swapChainDesc);
+
+                DX12::wwidth = swapChainDesc.BufferDesc.Width;
+                DX12::wheight = swapChainDesc.BufferDesc.Height;
+
+                ui::menu::Draw();
+            
+            
+            }
 
 
 

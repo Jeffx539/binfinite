@@ -5,6 +5,7 @@
 #include "../console.hpp"
 #include "../engine/server.hpp"
 #include "../engine/client.hpp"
+#include "dx12.hpp"
 #include "../engine/shared.hpp"
 namespace ui::menu {
 
@@ -23,16 +24,17 @@ void Draw()
 {
     static int tickrate = 60;
     static bool client_nwperf = true;
-    ImGui::SetNextWindowSizeConstraints(ImVec2(1200, 600), ImVec2(FLT_MAX, FLT_MAX));
-    ImGui::Begin("Binfinite Alpha", &draw, ImGuiWindowFlags_MenuBar);
-    ImGui::SeparatorText("Settings");
-    ImGui::SliderInt("Game Tickrate", &tickrate, 60, 120, NULL, ImGuiSliderFlags_NoInput | ImGuiSliderFlags_AlwaysClamp);
-    ImGui::Checkbox("Client Network Stats", &client_nwperf);
 
-    if (tickrate != engine::server::GetTickRate()) { command::process_command("tickrate " + std::to_string(tickrate)); }
-    if (client_nwperf != engine::client::GetNWPerf()) { engine::client::SetNWPerf(client_nwperf); }
+    ImGui::SetNextWindowPos(ImVec2(10, 10));
+    ImGui::SetNextWindowSizeConstraints(ImVec2(DX12::wwidth-25, DX12::wheight-25), ImVec2(DX12::wwidth-25, DX12::wheight-25));
+    ImGui::Begin(
+      "Binfinite", &draw,  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+
+    ImGui::BeginGroup();
+    ImGui::BeginChild("left_pane", ImVec2(ImGui::GetWindowWidth() * 0.75f, 0), true);
 
     ImGui::SeparatorText("Server Browser");
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 15, 15 });
 
     if (ImGui::BeginTable("server browser",
           5,
@@ -67,17 +69,37 @@ void Draw()
             ImGui::PopID();
         }
 
+   
     
 
-        ImGui::EndTable();
     }
+
+
+    ImGui::EndTable();
+    ImGui::PopStyleVar();
+
     if (ImGui::SmallButton("Refresh Server List")) {
         engine::shared::GameSocketSend("binfinitemaster.lh2.au", 7676, "\xff\xff\xff\xffgetservers INFINITE");
     }
 
+    ImGui::EndChild();
 
 
+    ImGui::SameLine();
 
+    console::log("%f width", ImGui::GetWindowWidth());
+    ImGui::BeginChild("right_pane", ImVec2(ImGui::GetWindowWidth() * 0.24f - 10.0f, 0), true);
+    ImGui::SeparatorText("Settings");
+    ImGui::SliderInt(
+      "Game Tickrate", &tickrate, 60, 120, NULL, ImGuiSliderFlags_NoInput | ImGuiSliderFlags_AlwaysClamp);
+    ImGui::Checkbox("Client Network Stats", &client_nwperf);
+
+    if (tickrate != engine::server::GetTickRate()) { command::process_command("tickrate " + std::to_string(tickrate)); }
+    if (client_nwperf != engine::client::GetNWPerf()) { engine::client::SetNWPerf(client_nwperf); }
+
+
+    ImGui::EndChild();
+    ImGui::EndGroup();
 
 
     ImGui::End();

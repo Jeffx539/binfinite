@@ -12,7 +12,16 @@
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+
+
+
 namespace DX12 {
+
+inline int wwidth = 1200.f;
+inline int wheight = 600.f;
+
+
+	
 void Hook(HWND hwnd);
 void Unhook();
 }// namespace DX12
