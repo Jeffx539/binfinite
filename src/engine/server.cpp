@@ -10,6 +10,8 @@
 namespace engine::server {
 utils::hooks::detour sv_set_lan_command_hook;
 utils::hooks::detour sv_frame_info_hook;
+utils::hooks::detour sv_printf_hook;
+
 
 // needs a better name
 struct LanCommandRequest
@@ -27,10 +29,10 @@ struct ServerVariant
 };
 
 
-uint32_t GetTickRate() {
+uint32_t GetTickRate()
+{
     auto rater = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x50cf720;
     return *reinterpret_cast<uint32_t *>(rater);
-
 }
 
 
@@ -108,7 +110,7 @@ void UpdateFTL(uint64_t valu)
     uint8_t **var = reinterpret_cast<uint8_t **>(GetServerVar("lanFTLXuid"));
     uint64_t val = valu;
     uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-    auto func = (uint64_t * (__stdcall *)(void *, uint64_t *))(mod + 0x2dec8f4);// lan_update_ftl
+    auto func = (uint64_t *(__stdcall *)(void *, uint64_t *))(mod + 0x2dec8f4);// lan_update_ftl
     func(*var, &val);
 }
 
@@ -174,6 +176,15 @@ void SetupVariant(const std::string map, const std::string gamemode)
         console::log("Setting up %s,%s, %p", map.c_str(), gamemode.c_str(), *var);
         // assert(false);
     }
+}
+
+
+void UpdateNetworkSessionTeamIdx(uint64_t xuid, uint32_t idx)
+{
+
+    uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
+    auto func = (uint64_t *(__stdcall *)(void *, uint32_t))(mod + 0x0529808);
+    func(&xuid, idx);
 }
 
 
@@ -258,7 +269,22 @@ void LoadServerConfig(const std::string path)
     g_serverConfig.rcon_password = config["server"]["rcon_password"].as_string()->value_or("");
     g_serverConfig.game_variants = _load_variants(*config["server"]["gamevariants"].as_array());
     g_serverConfig.map_variants = _load_variants(*config["server"]["mapvariants"].as_array());
+}
 
+
+void Hook_ServerPrintf(char arg1, char arg2, char arg3, char arg4, int64_t arg5, char arg6)
+{
+    /*va_list args;
+    va_start(args, fmt);
+    printf("%s - ", subsystem);
+    vprintf(fmt, args);
+    printf("\n");
+    va_end(args);*/
+
+    console::log("%d %d %d %d %s %d", arg1, arg2, arg3, arg4, arg5, arg6);
+
+
+    return;
 }
 
 
@@ -274,6 +300,7 @@ void InstallHooks()
 
     std::uint8_t *module_base = reinterpret_cast<std::uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
     sv_frame_info_hook.create(module_base + 0x2506b0c, &Hook_FrameInfo);
+    sv_printf_hook.create(module_base + 0x08c9ebc, &Hook_ServerPrintf);
 }
 
 }// namespace engine::server

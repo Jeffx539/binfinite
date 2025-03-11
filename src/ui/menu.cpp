@@ -86,8 +86,6 @@ void Draw()
 
 
     ImGui::SameLine();
-
-    console::log("%f width", ImGui::GetWindowWidth());
     ImGui::BeginChild("right_pane", ImVec2(ImGui::GetWindowWidth() * 0.24f - 10.0f, 0), true);
     ImGui::SeparatorText("Settings");
     ImGui::SliderInt(

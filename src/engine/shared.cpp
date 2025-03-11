@@ -4,6 +4,8 @@
 #include "../utils/memory.hpp"
 #include "../utils/hooks.hpp"
 #include "../engine/server.hpp"
+#include "../engine/networking.hpp"
+
 #include "../command.hpp"
 #include "../environment.hpp"
 
@@ -180,7 +182,7 @@ void GameSocketSend(const std::string &ip, short port, std::string buffer)
                 info_response += "\\game\\binfinite";
                 info_response += "\\challenge\\fixme";
                 info_response += "\\hostname\\"+server::g_serverConfig.server_name;
-                info_response += "\\clients\\" +std::to_string(0);
+                info_response += "\\clients\\" +std::to_string(engine::networking::SessionMembership::GetInstance()->PeerCount);
                 info_response += "\\sv_maxclients\\" + std::to_string(32);
                 info_response += "\\mapname\\mapvarianthere";
                 info_response += "\\playmode\\gamevairanthere";

@@ -14,10 +14,20 @@ void InstallHooks();
 void StartGame();
 void EndMode();
 void FastRestart();
-void UpdateFTL(uint64_t valu);
+
+
 void SetupVariant(const std::string map, const std::string gamemode);
 void UpdateTickRate(uint64_t rate);
 void ToggleFPSStats();
+
+
+
+void UpdateNetworkSessionTeamIdx(uint64_t xuid, uint32_t idx);
+
+
+
+void UpdateFTL(uint64_t valu);
+
 
 
 struct Variant

@@ -4,6 +4,7 @@
 #include "engine/lua.hpp"
 #include "engine/shared.hpp"
 #include "engine/server.hpp"
+#include "engine/networking.hpp"
 #include "environment.hpp"
 
 #include "exports.hpp"
@@ -116,6 +117,10 @@ void main()
       "tickrate", [](const std::vector<std::string> args) { engine::server::UpdateTickRate(std::stoi(args[0])); });
     command::register_cmd(
       "sv_setftl", [](const std::vector<std::string> args) { engine::server::UpdateFTL(std::stoull(args[0])); });
+    command::register_cmd("setteam",
+      [](const std::vector<std::string> args) { engine::server::UpdateNetworkSessionTeamIdx(std::stoull(args[0]), std::stoi(args[1])); });
+
+
     command::register_cmd(
       "fps", [](const std::vector<std::string> args) { engine::client::SetFrameRate(std::stof(args[0])); });
     command::register_cmd("fps_stats", [](const std::vector<std::string> args) { engine::server::ToggleFPSStats(); });
@@ -123,6 +128,34 @@ void main()
       "connect", [](const std::vector<std::string> args) { engine::client::ConnectToServer(args[0]); });
     command::register_cmd(
       "lua_run", [](const std::vector<std::string> args) { engine::shared::lua::DoString(args[0].c_str()); });
+    command::register_cmd("status", [](const std::vector<std::string> args) {
+        setlocale(LC_ALL, "");
+
+
+        console::log("status %d connected peers", engine::networking::SessionMembership::GetInstance()->PeerCount);
+
+        console::log("ID  XUID             TeamIdx Name");
+        console::log("--- ---------------- ------- --------------------");
+        int32_t peer_idx = engine::networking::SessionMembership::GetFirstPeer();
+        while (peer_idx != -1) {
+                console::log("%01d %llu %d %ls ",
+                  peer_idx,
+                  *engine::networking::SessionMembership::PeerXUID(peer_idx),
+                  *engine::networking::SessionMembership::TeamIdx1(peer_idx),
+                  engine::networking::SessionMembership::PeerName(peer_idx));
+
+
+                 peer_idx = engine::networking::SessionMembership::GetNextPeer(peer_idx);
+            }
+     });
+
+        command::register_cmd(
+      "setteam", [](const std::vector<std::string> args) { 
+             *engine::networking::SessionMembership::TeamIdx1(std::stoi(args[0])) = std::stoi(args[1]);
+         engine::networking::SessionMembership::GetInstance()->TotalPacketsSent++;
+            
+            
+      });
 
 
 
@@ -143,14 +176,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,// handle to DLL module
     case DLL_PROCESS_ATTACH:
         // call main
         DisableThreadLibraryCalls(hinstDLL);
-        mutex = CreateMutexA(NULL, TRUE, "UniqueDLLInstanceMutex");
+        /*mutex = CreateMutexA(NULL, TRUE, "UniqueDLLInstanceMutex");
         if (mutex == nullptr || GetLastError() == ERROR_ALREADY_EXISTS) {
             if (mutex != nullptr) {
                 CloseHandle(mutex);
                 mutex = nullptr;
             }
             return FALSE;
-        }
+        }*/
 
 
         CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)client::main, hinstDLL, 0, nullptr);
