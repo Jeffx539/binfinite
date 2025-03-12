@@ -147,7 +147,8 @@ void GameSocketSend(const std::string &ip, short port, std::string buffer)
 
             HMODULE ws2 = LoadLibrary("ws2_32.dll");
             networking_recvfrom.create(GetProcAddress(ws2, "recvfrom"), &Hook_RecvFrom);
-            OOBOn("rcon", [](NetworkAddress &addr, const std::string data) { 
+            // space is intentional
+            OOBOn("rcon ", [](NetworkAddress &addr, const std::string data) { 
             
                 if (!environment::IsServer()) { return; }
                 if (engine::server::g_serverConfig.rcon_password == "") { return; }
@@ -164,11 +165,11 @@ void GameSocketSend(const std::string &ip, short port, std::string buffer)
 
 
                 std::string cmd(
-                  command_bytes, 0, data.length() - engine::server::g_serverConfig.rcon_password.length());
+                  command_bytes, 0, data.length() - engine::server::g_serverConfig.rcon_password.length()-1);
 
                 console::log("processing rcon command: %s", cmd.c_str());
                 command::process_command(cmd);
-                engine::shared::GameSocketSend(addr.ip, addr.port, data);
+                engine::shared::GameSocketSend(addr.ip, addr.port, cmd);
 
 
 

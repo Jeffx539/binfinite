@@ -22,7 +22,7 @@ namespace patches {
             };
 
 
-            uint8_t *addr = static_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4939f10;
+            uint8_t *addr = GAME_PTR(0x4939f10);
             uint8_t *offs = reinterpret_cast<uint8_t *>((*reinterpret_cast<uint8_t **>(addr) + 0x53fd0)) + 0x18;
 
             for (size_t i = 0; i < 26; i++) {

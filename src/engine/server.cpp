@@ -309,7 +309,7 @@ void InstallHooks()
     CreateThread(NULL, 0, FixLobbyLC, NULL, 0, NULL);
     std::uint8_t *module_base = reinterpret_cast<std::uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
     sv_frame_info_hook.create(module_base + 0x2506b0c, &Hook_FrameInfo);
-    sv_printf_hook.create(module_base + 0x08c9ebc, &Hook_ServerPrintf);
+    //sv_printf_hook.create(module_base + 0x08c9ebc, &Hook_ServerPrintf);
 }
 
 }// namespace engine::server
