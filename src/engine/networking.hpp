@@ -55,6 +55,13 @@ class SessionMembership
         return (uint8_t *)(reinterpret_cast<uint8_t *>(SessionMembership::GetInstance()) + (peer * 0x1308) + 0x2b0c);
     }
 
+    // not really aprt of sessionmembership
+    static uint32_t* NetworkCounter() {
+        return (uint32_t *)(reinterpret_cast<uint8_t *>(SessionMembership::GetInstance()) - 0x60 + 0x4f314);
+    }
+
+
+
 
 
 };// Size: 0x0140

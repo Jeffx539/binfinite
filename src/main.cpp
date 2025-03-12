@@ -99,8 +99,6 @@ void main()
 
 
     } else {
-        // client codepath
-        // patches::client::PatchIntro();
         engine::client::Init();
         engine::server::UpdateTickRate(60);
     }
@@ -133,15 +131,18 @@ void main()
 
 
         console::log("status %d connected peers", engine::networking::SessionMembership::GetInstance()->PeerCount);
+        console::log("lobby session packet counter %d %d", engine::networking::SessionMembership::GetInstance()->TotalPacketsSent, *engine::networking::SessionMembership::NetworkCounter());
+        console::log("");
 
         console::log("ID  XUID             TeamIdx Name");
         console::log("--- ---------------- ------- --------------------");
         int32_t peer_idx = engine::networking::SessionMembership::GetFirstPeer();
         while (peer_idx != -1) {
-                console::log("%01d %llu %d %ls ",
+                console::log("%01d %llu %d %d %ls ",
                   peer_idx,
                   *engine::networking::SessionMembership::PeerXUID(peer_idx),
                   *engine::networking::SessionMembership::TeamIdx1(peer_idx),
+                  *engine::networking::SessionMembership::TeamIdx2(peer_idx),
                   engine::networking::SessionMembership::PeerName(peer_idx));
 
 
@@ -156,6 +157,20 @@ void main()
             
             
       });
+
+
+        
+        command::register_cmd("rt_offsdebug", [](const std::vector<std::string> args) {
+            console::log("Network Session Global %p", engine::networking::SessionMembership::GetInstance() - 0x60);
+            console::log("Session Membership %p", engine::networking::SessionMembership::GetInstance());
+
+            // will crash if not set
+             console::log("First Peer team offset %p", engine::networking::SessionMembership::TeamIdx1(0));
+
+
+
+        });
+
 
 
 

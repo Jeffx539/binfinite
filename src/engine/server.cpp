@@ -115,6 +115,7 @@ void UpdateFTL(uint64_t valu)
 }
 
 
+
 void FormatUUID(char *formatted, const std::string id)
 {
     sscanf(id.c_str(),
@@ -274,30 +275,38 @@ void LoadServerConfig(const std::string path)
 
 void Hook_ServerPrintf(char arg1, char arg2, char arg3, char arg4, int64_t arg5, char arg6)
 {
-    /*va_list args;
-    va_start(args, fmt);
-    printf("%s - ", subsystem);
-    vprintf(fmt, args);
-    printf("\n");
-    va_end(args);*/
 
-    console::log("%d %d %d %d %s %d", arg1, arg2, arg3, arg4, arg5, arg6);
-
-
+    //console::log("%d %d %d %d %s %d", arg1, arg2, arg3, arg4, arg5, arg6);
     return;
 }
+
+
+
+// 343 is terrible, lifecycle is synced from life-cycle. It sends the wrong lifecycle to new connecting hosts. this is to run in a loop to look for 
+// 00 00 00 00 01 00 01 00. if this is found it should zero it out to prevent the lobby from breaking lol. There's a bug in their lifecycle implementation
+DWORD WINAPI FixLobbyLC(LPVOID params){ 
+    while (true) {    
+        auto lc_ptr = *reinterpret_cast<uint8_t **>(GetServerVar("life-cycle"));
+        auto magic = reinterpret_cast<uint64_t *>(lc_ptr + 0xc8);
+
+        if (*magic == 281479271677952) { 
+            console::log("Fixing Lobby life-cycle to prevent players from breaking.");
+            *magic = 0;
+        }
+
+        Sleep(100);
+    }
+}
+
+
+
+
 
 
 void InstallHooks()
 {
     console::log("Installing Server Hooks/Patches");
-    // void* set_lan_offs = static_cast<uint8_t*>(utils::memory::search(
-    //           "", "\x73\x59\x48\x8B\x45\xCC\x8B\xCB\x48\x0F\xA3\xC8\x73\x43\x4C\x8B\x3E", 0xCC))  - 0x46;
-    //         console::log("LAN Server %p", set_lan_offs);
-    // sv_set_lan_command_hook.create(set_lan_offs, &set_lan_command_stub);
-
-    // UpdateFTL();
-
+    CreateThread(NULL, 0, FixLobbyLC, NULL, 0, NULL);
     std::uint8_t *module_base = reinterpret_cast<std::uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
     sv_frame_info_hook.create(module_base + 0x2506b0c, &Hook_FrameInfo);
     sv_printf_hook.create(module_base + 0x08c9ebc, &Hook_ServerPrintf);

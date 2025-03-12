@@ -59,7 +59,7 @@ void Draw()
              ImGui::TableNextRow();
 
              if (ImGui::TableSetColumnIndex(0)) ImGui::TextUnformatted(row.second.props["hostname"].c_str());
-             if (ImGui::TableSetColumnIndex(1)) ImGui::TextUnformatted("0/32");
+             if (ImGui::TableSetColumnIndex(1)) ImGui::Text("%s/32", row.second.props["clients"].c_str());
              if (ImGui::TableSetColumnIndex(2)) ImGui::TextUnformatted("aquarius/slayer ctf");
              if (ImGui::TableSetColumnIndex(3)) ImGui::Text("%d ms", row.second.ping);
              if (ImGui::TableSetColumnIndex(4)) {
