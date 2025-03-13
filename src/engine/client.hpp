@@ -11,6 +11,7 @@ float GetInputLat();
 bool IsServerSelectionOpen();
 void Init();
 bool GetNWPerf();
+void FixGrapple(float frac);
 void SetNWPerf(bool state);
 
 char *GetRTTString();

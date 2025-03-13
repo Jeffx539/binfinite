@@ -52,8 +52,6 @@ namespace patches {
             uint8_t *addr = GAME_PTR(0x50ab7b8);// mar13
             uint8_t *addr1 = GAME_PTR(0x50ab770);// mar13
             uint8_t *addr2 = GAME_PTR(0x50ab800);// mar13 
-
-            console::log("%p", addr);
             *addr = 0;
             *addr1 = 0;
             *addr2 = 0;

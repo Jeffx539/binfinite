@@ -4,7 +4,7 @@
 #include "../ui/hook.hpp"
 #include "../utils/memory.hpp"
 #include <WinSock2.h>
-
+#include "tags.hpp"
 #include "client.hpp"
 #include "server.hpp"
 #include <windows.h>
@@ -116,6 +116,26 @@ void ConnectToServer(std::string ip_addr) {
             connect_to_server(0);
         }
 }
+
+
+void FixGrapple(float frac) {
+    auto tags = *reinterpret_cast<tags::DataArray **>(GAME_PTR(0x4900b58));
+    // very very bad, but w/e
+    for (uint32_t i = 0; i < tags->FirtUnallocated; i++) {
+        auto tag_offset = tags->Data + (i * tags->DatumSize);
+        auto tag_struct = reinterpret_cast<tags::TagStruct *>(tag_offset);
+        // lol
+        if (strncmp(*tag_struct->TagGroup, "Grapple", 7) == 0) {
+            auto grapple = reinterpret_cast<tags::GrappleHookDefinition *>(tag_struct->Data);
+            // default values
+            grapple->PullBaseTargetVel = 8 * frac;
+            grapple->PullAccelerationPhase = 2.5 * frac;
+
+            //console::log("%p %f %f", grapple,grapple->PullBaseTargetVel, grapple->PullAccelerationPhase);
+        }
+    }
+}
+
 
 
 void AddServerToList(const std::string &server_name, unsigned long ip_address)

@@ -5,7 +5,9 @@
 #include "engine/shared.hpp"
 #include "engine/server.hpp"
 #include "engine/networking.hpp"
+#include "engine/tags.hpp"
 #include "environment.hpp"
+
 
 #include "exports.hpp"
 #include "patches.hpp"
@@ -65,7 +67,14 @@ DWORD WINAPI ProbeThread(LPVOID params)
 void RegisterSharedCommands() {
     // shared commands currently live here we need to move them
     command::register_cmd(
-      "tickrate", [](const std::vector<std::string> args) { engine::server::UpdateTickRate(std::stoi(args[0])); });
+      "tickrate", [](const std::vector<std::string> args) { 
+            auto rate = std::stoi(args[0]);
+            engine::server::UpdateTickRate(rate); 
+
+            // lol
+            if (environment::IsClient) engine::client::FixGrapple(-1.f / 120.f * static_cast<float>(rate) + 1.5f);
+        
+        });
     command::register_cmd(
       "fps", [](const std::vector<std::string> args) { engine::client::SetFrameRate(std::stof(args[0])); });
     command::register_cmd("fps_stats", [](const std::vector<std::string> args) { engine::server::ToggleFPSStats(); });
@@ -73,6 +82,12 @@ void RegisterSharedCommands() {
       "connect", [](const std::vector<std::string> args) { engine::client::ConnectToServer(args[0]); });
     command::register_cmd(
       "lua_run", [](const std::vector<std::string> args) { engine::shared::lua::DoString(args[0].c_str()); });
+
+
+     command::register_cmd("dump_tags", [](const std::vector<std::string> args) { engine::tags::DumpTags(); });
+
+
+
     command::register_cmd("status", [](const std::vector<std::string> args) {
         setlocale(LC_ALL, "");
 
