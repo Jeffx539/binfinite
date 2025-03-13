@@ -22,8 +22,8 @@ namespace patches {
             };
 
 
-            uint8_t *addr = GAME_PTR(0x4939f10);
-            uint8_t *offs = reinterpret_cast<uint8_t *>((*reinterpret_cast<uint8_t **>(addr) + 0x53fd0)) + 0x18;
+            uint8_t *addr = GAME_PTR(0x493ffa8);
+            uint8_t *offs = reinterpret_cast<uint8_t *>((*reinterpret_cast<uint8_t **>(addr) + 0x53fd8)) + 0x18;
 
             for (size_t i = 0; i < 26; i++) {
 
@@ -49,9 +49,9 @@ namespace patches {
 
 
         void PatchEAC() { console::log("Patching EAC");
-            uint8_t *addr = static_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x50a57b8;
-            uint8_t *addr1 = static_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x050a5770;
-            uint8_t *addr2 = static_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x050a5800;
+            uint8_t *addr = GAME_PTR(0x50ab7b8); // mar13
+            uint8_t *addr1 = GAME_PTR(0x050a5770); // mar13
+            uint8_t *addr2 = GAME_PTR(0x050a5800); // mar13 
 
            
             *addr = 0;

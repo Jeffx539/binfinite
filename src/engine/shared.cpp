@@ -33,8 +33,7 @@ void GameSocketSend(const std::string &ip, short port, std::string buffer)
 
     if (addr_info == NULL) { return; }
 
-    auto socket = reinterpret_cast<SOCKET **>(
-      reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4efe880);
+    auto socket = reinterpret_cast<SOCKET **>(reinterpret_cast<uint8_t *>(GAME_PTR(0x4f04880)));
     int retcode = sendto(**socket, buffer.data(), buffer.length(), 0, addr_info->ai_addr, (int)addr_info->ai_addrlen);
     if (retcode == SOCKET_ERROR) { console::log("sendto failed with error: %d\n", WSAGetLastError()); }
 
@@ -91,7 +90,7 @@ void GameSocketSend(const std::string &ip, short port, std::string buffer)
         }
 
         // todo optimise
-        auto game_socket = reinterpret_cast<SOCKET **>( reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4efe880);
+        auto game_socket = reinterpret_cast<SOCKET **>(GAME_PTR(0x4f04880)); // mar13
         int Hook_RecvFrom(SOCKET s, PSTR buf, int32_t len, int32_t flags, SOCKADDR *from, int32_t *fromlen)
         {            
             if (s != **game_socket) {

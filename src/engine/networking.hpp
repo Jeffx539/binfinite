@@ -18,18 +18,18 @@ class SessionMembership
 
     static SessionMembership *GetInstance()
     {
-        return reinterpret_cast<SessionMembership *>((*reinterpret_cast<uint8_t **>(GAME_PTR(0x4d725c0))) + 0x60);
+        return reinterpret_cast<SessionMembership *>((*reinterpret_cast<uint8_t **>(GAME_PTR(0x4d78640))) + 0x60); // mar13
     }
 
     static int32_t GetFirstPeer()
     {
-        auto get_first_peer = (int32_t(__stdcall *)(SessionMembership *))(GAME_PTR(0x0528d94));
+        auto get_first_peer = (int32_t(__stdcall *)(SessionMembership *))(GAME_PTR(0x052e564)); // mar13
         return get_first_peer(SessionMembership::GetInstance());
     }
 
     static int32_t GetNextPeer(int32_t last)
     {
-        auto get_next_peer = (int32_t(__stdcall *)(SessionMembership *, int32_t last))(GAME_PTR(0x0529808));
+        auto get_next_peer = (int32_t(__stdcall *)(SessionMembership *, int32_t last))(GAME_PTR(0x052efd8)); //mar13
         return get_next_peer(SessionMembership::GetInstance(), last);
     }
 

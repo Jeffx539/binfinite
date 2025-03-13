@@ -11,8 +11,6 @@ namespace patches {
 
 
 	namespace server {
-
-		void PatchAddFTL();
 		 void GetServerOpModeFuncTable();
 	};
 

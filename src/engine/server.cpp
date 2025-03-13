@@ -36,7 +36,7 @@ struct ServerVariant
 
 uint32_t GetTickRate()
 {
-    auto rater = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x50cf720;
+    auto rater = GAME_PTR(0x50d5720); // mar13
     return *reinterpret_cast<uint32_t *>(rater);
 }
 
@@ -44,28 +44,13 @@ uint32_t GetTickRate()
 void UpdateTickRate(uint64_t rate)
 {
 
-    // cbf sigscanning this
-    /*    uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-        auto tick_sub_inner = (uint8_t * (__stdcall *)())(mod + 0x043ff2c);
-        auto tick_sub_outer = (uint8_t * (__stdcall *)(uint8_t *))(mod + 0x043ff18);
-
-        uint8_t *offs = tick_sub_outer(tick_sub_inner() + 0x28) + 0xe363c;*/
-    /*  uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-      auto override_tickrate = (void *(__stdcall *)(uint32_t))(mod + 0x05257e4);
-      override_tickrate(rate);*/
-
-
-    auto en = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4dffe64;
+    auto en = GAME_PTR(0x4e05ee4); // mar13
     *reinterpret_cast<char *>(en) = 1;
 
 
-    auto rater = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x50cf720;
+    auto rater = GAME_PTR(0x50d5720); // mar13
     *reinterpret_cast<uint32_t *>(rater) = rate;
 
-
-    // console::log("%p", offs);
-
-    //*offs = rate;
 }
 
 
@@ -84,13 +69,14 @@ uint64_t set_lan_command_stub(void *var_array, char arg2, char *command, int32_t
 {
 
     LanCommandRequest *com = reinterpret_cast<LanCommandRequest *>(command);
-    //   console::log("Set lan command %d %s", com->type, server_command_to_name(check_set_bit(com->type)).c_str());
-
-
     return sv_set_lan_command_hook.invoke<uint64_t>(var_array, arg2, command, arg4);
 }
 
-void *GetServerVar(const std::string var)
+
+
+
+
+uint8_t *GetServerVar(const std::string var)
 {
     struct MaybeDatum
     {
@@ -99,24 +85,32 @@ void *GetServerVar(const std::string var)
         char *name;// 0x1000
     };
 
-
-    uint8_t *addr = static_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4939f10;
-    uint8_t *offs = reinterpret_cast<uint8_t *>((*reinterpret_cast<uint8_t **>(addr) + 0x53fd0)) + 0x18;
+  
+     uint8_t *addr = GAME_PTR(0x493ffa8);
+    uint8_t *offs = reinterpret_cast<uint8_t *>((*reinterpret_cast<uint8_t **>(addr) + 0x53fd8)) + 0x18;
 
     for (size_t i = 0; i < 27; i++) {
         MaybeDatum **nice = reinterpret_cast<MaybeDatum **>((offs + i * 8));
-        if (std::string((*nice)->name) == var) { return nice; }
+        if (std::string((*nice)->name) == var) { return reinterpret_cast<uint8_t*>(nice); }
     }
     return nullptr;
 }
 
+void *GetServerFunc(uint8_t* address)
+{ 
+
+    auto addr = *reinterpret_cast<uint8_t ***>(address);
+    return reinterpret_cast<void*>(* reinterpret_cast<void**>((*addr + 0x78)));
+}
+
+
+
 void UpdateFTL(uint64_t valu)
 {
-    uint8_t **var = reinterpret_cast<uint8_t **>(GetServerVar("lanFTLXuid"));
+    auto var = GetServerVar("lanFTLXuid");
+    auto func = (uint64_t * (__stdcall *)(uint8_t *, uint64_t *))(GetServerFunc(var));
     uint64_t val = valu;
-    uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-    auto func = (uint64_t *(__stdcall *)(void *, uint64_t *))(mod + 0x2dec8f4);// lan_update_ftl
-    func(*var, &val);
+    func(*reinterpret_cast<uint8_t **>(var), &val);
 }
 
 
@@ -168,10 +162,6 @@ void SetupVariant(const std::string map, const std::string gamemode)
     FormatUUID(pl.gameVariant, g_serverConfig.game_variants[gamemode].asset);
     FormatUUID(pl.gameVersion, g_serverConfig.game_variants[gamemode].version);
 
-    /// some weirdd shit happens with this stuff nfi
-    // uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-    // auto func = (uint64_t * (__stdcall *)(void *, payload *))(mod + 0x2d8f2f0);
-    //              func(*var, &pl);
 
     if (var != nullptr) {
 
@@ -185,39 +175,28 @@ void SetupVariant(const std::string map, const std::string gamemode)
 }
 
 
-void UpdateNetworkSessionTeamIdx(uint64_t xuid, uint32_t idx)
-{
-
-    uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-    auto func = (uint64_t *(__stdcall *)(void *, uint32_t))(mod + 0x0529808);
-    func(&xuid, idx);
-}
-
 
 void StartGame()
 {
-    uint8_t **var = reinterpret_cast<uint8_t **>(GetServerVar("start-mode"));
-    static uint64_t val = 1;
-    uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-    auto func = (uint64_t *(__stdcall *)(void *, uint64_t *))(mod + 0x2ddc904);// lan_update_var
-
+    auto var = GetServerVar("start-mode");
+    auto func = (uint64_t * (__stdcall *)(uint8_t *, uint64_t *))(GetServerFunc(var));
+    uint64_t val = 1;
 
     if (var != nullptr) {
-        console::log("Starting Server");
-        func(*var, &val);
+        console::log("Starting Game");
+        func(*reinterpret_cast<uint8_t **>(var), &val);
     }
 }
 
 void EndMode()
 {
-    uint8_t **var = reinterpret_cast<uint8_t **>(GetServerVar("end-game"));
-    static uint64_t val = 1;
-    uint8_t *mod = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-    auto func = (uint64_t *(__stdcall *)(void *, uint64_t *))(mod + 0x2ddcd4c);
+    auto var = GetServerVar("end-game");
+    auto func = (uint64_t * (__stdcall *)(uint8_t *, uint64_t *))(GetServerFunc(var));
+    uint64_t val = 1;
 
     if (var != nullptr) {
         console::log("Ending Game");
-        func(*var, &val);
+        func(*reinterpret_cast<uint8_t **>(var), &val);
     }
 }
 
@@ -250,7 +229,7 @@ uint64_t Hook_FrameInfo(FILE *file, char *fmt, ...)
 
 void ToggleFPSStats()
 {
-    auto stats = reinterpret_cast<uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll) + 0x4d636e0;
+    auto stats = GAME_PTR(0x4d69760); // mar13
     *stats = ~*stats;
 }
 
@@ -299,12 +278,14 @@ void RegisterCommands() {
     command::register_cmd(
       "sv_setftl", [](const std::vector<std::string> args) { engine::server::UpdateFTL(std::stoull(args[0])); });
 
-     command::register_cmd(
-      "sv_fixemptyftl", [](const std::vector<std::string> args) { sv_fixemptyftl = std::stoi(args[0]); });
 
     command::register_cmd("setteam", [](const std::vector<std::string> args) {
-        engine::server::UpdateNetworkSessionTeamIdx(std::stoull(args[0]), std::stoi(args[1]));
+        *engine::networking::SessionMembership::TeamIdx1(std::stoi(args[0])) = std::stoi(args[1]);
+        engine::networking::SessionMembership::GetInstance()->TotalPacketsSent++;
     });
+
+     command::register_cmd(
+      "sv_fixemptyftl", [](const std::vector<std::string> args) { sv_fixemptyftl = std::stoi(args[0]); });
 
     command::register_cmd("map_start", [](const std::vector<std::string> args) { engine::server::StartGame(); });
     command::register_cmd("map_end", [](const std::vector<std::string> args) { engine::server::EndMode(); });
@@ -370,9 +351,6 @@ void Init() {
     ExecuteConfig("./server.cfg");
 
 
-
-
-
 }
 
 
@@ -382,8 +360,7 @@ void InstallHooks()
 {
     console::log("Installing Server Hooks/Patches");
     CreateThread(NULL, 0, FixLobbyLC, NULL, 0, NULL);
-    std::uint8_t *module_base = reinterpret_cast<std::uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
-    sv_frame_info_hook.create(module_base + 0x2506b0c, &Hook_FrameInfo);
+    sv_frame_info_hook.create(GAME_PTR(0x250cfcc), &Hook_FrameInfo);// mar13
 
 
 

@@ -25,7 +25,6 @@ void ToggleFPSStats();
 
 
 
-void UpdateNetworkSessionTeamIdx(uint64_t xuid, uint32_t idx);
 
 
 

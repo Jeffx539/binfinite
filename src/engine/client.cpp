@@ -16,58 +16,53 @@
 namespace engine::client {
 
     void SetNWPerf(bool state) {
-        auto addrt = GAME_PTR(0x4f31492);
+        auto addrt = GAME_PTR(0x4f364a4); // mar13
         *reinterpret_cast<bool *>(addrt) = state;
     }
 
     bool GetNWPerf() {
-        auto addrt = GAME_PTR(0x4f31492);
+        auto addrt = GAME_PTR(0x4f364a4);// mar13
         return *reinterpret_cast<bool *>(addrt);
     }
 
+    bool IsServerSelectionOpen()
+    {
+        auto addr = GAME_PTR(0x4D75324); // mar13
+        return *reinterpret_cast<bool *>(addr);
+    }
+
+    float GetInputLat()
+    {
+        auto addrt = GAME_PTR(0x4bd2c5c); // mar13
+        return *reinterpret_cast<float *>(addrt);
+    }
 
 
-bool IsServerSelectionOpen()
-{
-
-    auto addr = GAME_PTR(0x4D6F2A4);
-    return *reinterpret_cast<bool *>(addr);
-
-
-    // data_144f31492
-}
-float GetInputLat()
-{
-    auto addrt = GAME_PTR(0x4939e10);
-    return *reinterpret_cast<float *>(addrt);
-}
+    char *GetRTTString()
+    {
+        auto addr = GAME_PTR(0x4d3d8f0);
+        return reinterpret_cast<char *>(addr);
+    }
 
 
-char *GetRTTString()
-{
-    auto addr = GAME_PTR(0x4d3d8f0);
-    return reinterpret_cast<char *>(addr);
-}
+    void SetFrameRate(float frame_rate)
+    {
+        auto rate = GAME_PTR(0x4bd2c5c); // mar13
+        *reinterpret_cast<float *>(rate) = frame_rate;
+    }
 
 
-void SetFrameRate(float frame_rate)
-{
-    auto rate = GAME_PTR(0x4bccbdc);
-    *reinterpret_cast<float *>(rate) = frame_rate;
-}
-
-
-float GetFrameRate()
-{
-    auto rate = GAME_PTR(0x4bccbdc);
-    return *reinterpret_cast<float *>(rate);
-}
+    float GetFrameRate()
+    {
+        auto rate = GAME_PTR(0x4bd2c5c); // mar13
+        return *reinterpret_cast<float *>(rate);
+    }
 
 
 void Init() {
 
     // wait for sn05 main menu to load using jank
-    auto wait_offs = GAME_PTR(0x5076AA7);
+    auto wait_offs = GAME_PTR(0x507CAA7); // mar13
     while (strcmp(reinterpret_cast<char *>(wait_offs), "levels\\ui\\mainmenu_sn05") < 0) {
         //console::log("%d", strcmp(reinterpret_cast<char *>(wait_offs), "levels\\ui\\mainmenu_sn05"));
         Sleep(10);
@@ -79,7 +74,7 @@ void Init() {
 
 
 uint64_t GetLobbyActivityState() {
-    auto get_lob_activity_offs = GAME_PTR(0x35b75d0);
+    auto get_lob_activity_offs = GAME_PTR(0x04eaba8);// mar13
     auto get_lob_activity = (int64_t(__stdcall *)())(get_lob_activity_offs);
     return get_lob_activity();
 }
@@ -87,19 +82,18 @@ uint64_t GetLobbyActivityState() {
 
 void ConnectToServer(std::string ip_addr) {
 
-        auto offs = GAME_PTR(0x2e65e48);
+        auto offs = GAME_PTR(0x2e6c59c); // mar 13
         auto test = (void(__stdcall *)(int32_t arg1, int32_t arg2, char arg3, char arg4))(offs);
 
 
-        auto connect_to_server_offs =
-          GAME_PTR(0x3512364);
+        auto connect_to_server_offs = GAME_PTR(0x3541d84); // mar13
         auto connect_to_server = (void(__stdcall *)(uint64_t arg1))(connect_to_server_offs);
 
-       auto can_lan_offs = GAME_PTR(0x04eaf1c);
+       auto can_lan_offs = GAME_PTR(0x04f06ec);  // mar13
         auto can_lan = (int64_t(__stdcall *)())(can_lan_offs);
 
 
-        auto req_lob_activity_offs = GAME_PTR(0x35b75d0);
+        auto req_lob_activity_offs = GAME_PTR(0x346fbe4);// mar13
         auto req_lob_activity = (int64_t(__stdcall *)(int64_t arg1, int32_t arg2))(req_lob_activity_offs);
 
         sockaddr_in sa;
@@ -180,7 +174,7 @@ void AddServerToList(const std::string &server_name, unsigned long ip_address)
     auto query_perf_ctr = (uint32_t(__stdcall *)())(query_perf_counter_offs);
     auto add_to_server_list = (void(__stdcall *)(
       uint8_t *nw_struct, void *ip, const wchar_t *computer_name, uint32_t update_time))(add_to_server_list_offs);
-    add_to_server_list(GAME_PTR(0x4d6f1f0),
+    add_to_server_list(GAME_PTR(0x4d75270), // mar13
       &ipAddr,
       serv_name.c_str(),
       query_perf_ctr());

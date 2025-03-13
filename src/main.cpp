@@ -99,10 +99,6 @@ void RegisterSharedCommands() {
         }
     });
 
-    command::register_cmd("setteam", [](const std::vector<std::string> args) {
-        *engine::networking::SessionMembership::TeamIdx1(std::stoi(args[0])) = std::stoi(args[1]);
-        engine::networking::SessionMembership::GetInstance()->TotalPacketsSent++;
-    });
 
 
     command::register_cmd("rt_offsdebug", [](const std::vector<std::string> args) {
@@ -129,7 +125,7 @@ void main()
     console::log("initialising mode: (%s) ...", env);
 
     patches::common::PatchEAC();
-    engine::shared::lua::InstallHooks();
+    //engine::shared::lua::InstallHooks();
     engine::shared::networking::InstallHooks();
 
 
