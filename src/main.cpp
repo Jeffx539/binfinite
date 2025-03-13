@@ -8,7 +8,6 @@
 #include "environment.hpp"
 
 #include "exports.hpp"
-#include "networking/rcon.hpp"
 #include "patches.hpp"
 #include "ui/hook.hpp"
 #include "version.h"
@@ -62,6 +61,61 @@ DWORD WINAPI ProbeThread(LPVOID params)
 }
 
 
+
+void RegisterSharedCommands() {
+    // shared commands currently live here we need to move them
+    command::register_cmd(
+      "tickrate", [](const std::vector<std::string> args) { engine::server::UpdateTickRate(std::stoi(args[0])); });
+    command::register_cmd(
+      "fps", [](const std::vector<std::string> args) { engine::client::SetFrameRate(std::stof(args[0])); });
+    command::register_cmd("fps_stats", [](const std::vector<std::string> args) { engine::server::ToggleFPSStats(); });
+    command::register_cmd(
+      "connect", [](const std::vector<std::string> args) { engine::client::ConnectToServer(args[0]); });
+    command::register_cmd(
+      "lua_run", [](const std::vector<std::string> args) { engine::shared::lua::DoString(args[0].c_str()); });
+    command::register_cmd("status", [](const std::vector<std::string> args) {
+        setlocale(LC_ALL, "");
+
+
+        console::log("status %d connected peers", engine::networking::SessionMembership::GetInstance()->PeerCount);
+        console::log("lobby session packet counter %d %d",
+          engine::networking::SessionMembership::GetInstance()->TotalPacketsSent,
+          *engine::networking::SessionMembership::NetworkCounter());
+        console::log("");
+
+        console::log("ID  XUID             TeamIdx Name");
+        console::log("--- ---------------- ------- --------------------");
+        int32_t peer_idx = engine::networking::SessionMembership::GetFirstPeer();
+        while (peer_idx != -1) {
+            console::log("%01d %llu %d %d %ls ",
+              peer_idx,
+              *engine::networking::SessionMembership::PeerXUID(peer_idx),
+              *engine::networking::SessionMembership::TeamIdx1(peer_idx),
+              *engine::networking::SessionMembership::TeamIdx2(peer_idx),
+              engine::networking::SessionMembership::PeerName(peer_idx));
+
+
+            peer_idx = engine::networking::SessionMembership::GetNextPeer(peer_idx);
+        }
+    });
+
+    command::register_cmd("setteam", [](const std::vector<std::string> args) {
+        *engine::networking::SessionMembership::TeamIdx1(std::stoi(args[0])) = std::stoi(args[1]);
+        engine::networking::SessionMembership::GetInstance()->TotalPacketsSent++;
+    });
+
+
+    command::register_cmd("rt_offsdebug", [](const std::vector<std::string> args) {
+        console::log("Network Session Global %p", engine::networking::SessionMembership::GetInstance() - 0x60);
+        console::log("Session Membership %p", engine::networking::SessionMembership::GetInstance());
+
+    });
+
+
+
+
+}
+
 // main entrypoint for our client
 void main()
 {
@@ -79,25 +133,10 @@ void main()
     engine::shared::networking::InstallHooks();
 
 
+
+    RegisterSharedCommands();
     if (environment::IsServer()) {
-
-
-        patches::server::GetServerOpModeFuncTable();
-        engine::server::InstallHooks();
-        engine::server::LoadServerConfig(
-          "./game/server.toml");// hoist somewhere and make it part of the CLI +exec server.toml
-
-
-        if (engine::server::g_serverConfig.rcon_password != "") {
-            std::thread t([]() {
-                networking::RCON rcon(engine::server::g_serverConfig.rcon_password);
-                rcon.listen();
-            });
-
-            t.detach();
-        }
-
-
+        engine::server::Init();
     } else {
         engine::client::Init();
         engine::server::UpdateTickRate(60);
@@ -105,73 +144,9 @@ void main()
 
 
     CreateThread(NULL, 0, ProbeThread, NULL, 0, NULL);
-    command::register_cmd("map_start", [](const std::vector<std::string> args) { engine::server::StartGame(); });
-    command::register_cmd("map_end", [](const std::vector<std::string> args) { engine::server::EndMode(); });
-    command::register_cmd(
-      "map", [](const std::vector<std::string> args) { engine::server::SetupVariant(args[0], args[1]); });
-    command::register_cmd(
-      "hostname", [](const std::vector<std::string> args) { engine::server::g_serverConfig.server_name = args[0]; });
-    command::register_cmd(
-      "tickrate", [](const std::vector<std::string> args) { engine::server::UpdateTickRate(std::stoi(args[0])); });
-    command::register_cmd(
-      "sv_setftl", [](const std::vector<std::string> args) { engine::server::UpdateFTL(std::stoull(args[0])); });
-    command::register_cmd("setteam",
-      [](const std::vector<std::string> args) { engine::server::UpdateNetworkSessionTeamIdx(std::stoull(args[0]), std::stoi(args[1])); });
+  
 
-
-    command::register_cmd(
-      "fps", [](const std::vector<std::string> args) { engine::client::SetFrameRate(std::stof(args[0])); });
-    command::register_cmd("fps_stats", [](const std::vector<std::string> args) { engine::server::ToggleFPSStats(); });
-    command::register_cmd(
-      "connect", [](const std::vector<std::string> args) { engine::client::ConnectToServer(args[0]); });
-    command::register_cmd(
-      "lua_run", [](const std::vector<std::string> args) { engine::shared::lua::DoString(args[0].c_str()); });
-    command::register_cmd("status", [](const std::vector<std::string> args) {
-        setlocale(LC_ALL, "");
-
-
-        console::log("status %d connected peers", engine::networking::SessionMembership::GetInstance()->PeerCount);
-        console::log("lobby session packet counter %d %d", engine::networking::SessionMembership::GetInstance()->TotalPacketsSent, *engine::networking::SessionMembership::NetworkCounter());
-        console::log("");
-
-        console::log("ID  XUID             TeamIdx Name");
-        console::log("--- ---------------- ------- --------------------");
-        int32_t peer_idx = engine::networking::SessionMembership::GetFirstPeer();
-        while (peer_idx != -1) {
-                console::log("%01d %llu %d %d %ls ",
-                  peer_idx,
-                  *engine::networking::SessionMembership::PeerXUID(peer_idx),
-                  *engine::networking::SessionMembership::TeamIdx1(peer_idx),
-                  *engine::networking::SessionMembership::TeamIdx2(peer_idx),
-                  engine::networking::SessionMembership::PeerName(peer_idx));
-
-
-                 peer_idx = engine::networking::SessionMembership::GetNextPeer(peer_idx);
-            }
-     });
-
-        command::register_cmd(
-      "setteam", [](const std::vector<std::string> args) { 
-             *engine::networking::SessionMembership::TeamIdx1(std::stoi(args[0])) = std::stoi(args[1]);
-         engine::networking::SessionMembership::GetInstance()->TotalPacketsSent++;
-            
-            
-      });
-
-
-        
-        command::register_cmd("rt_offsdebug", [](const std::vector<std::string> args) {
-            console::log("Network Session Global %p", engine::networking::SessionMembership::GetInstance() - 0x60);
-            console::log("Session Membership %p", engine::networking::SessionMembership::GetInstance());
-
-            // will crash if not set
-             console::log("First Peer team offset %p", engine::networking::SessionMembership::TeamIdx1(0));
-
-
-
-        });
-
-
+   
 
 
     for (std::string line; std::getline(std::cin, line);) { command::process_command(line); }

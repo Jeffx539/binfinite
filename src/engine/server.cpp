@@ -4,14 +4,19 @@
 #include <bitset>
 #include <iostream>
 #include <stdio.h>
+#include <../patches.hpp>
+#include <sstream>
+#include "networking.hpp"
 #include <toml++/toml.hpp>
 
+#include <../command.hpp>
 
 namespace engine::server {
 utils::hooks::detour sv_set_lan_command_hook;
 utils::hooks::detour sv_frame_info_hook;
 utils::hooks::detour sv_printf_hook;
 
+static int sv_fixemptyftl = 0;
 
 // needs a better name
 struct LanCommandRequest
@@ -232,19 +237,7 @@ void FastRestart()
 }
 
 
-std::map<const std::string, Variant> _load_variants(toml::array arr)
-{
 
-    std::map<const std::string, Variant> result;
-
-    arr.for_each([&result](auto &&valtext) {
-        auto node = toml::node_view(valtext);
-        result[node["name"].value_or("undefined")] =
-          Variant{ .asset = node["asset"].value_or("undefined"), .version = node["version"].value_or("undefined") };
-    });
-
-    return result;
-}
 uint64_t Hook_FrameInfo(FILE *file, char *fmt, ...)
 {
     va_list args;
@@ -262,15 +255,6 @@ void ToggleFPSStats()
 }
 
 
-void LoadServerConfig(const std::string path)
-{
-
-    auto config = toml::parse_file(path);
-    g_serverConfig.server_name = config["server"]["hostname"].as_string()->value_or("Binfinite Dedi");
-    g_serverConfig.rcon_password = config["server"]["rcon_password"].as_string()->value_or("");
-    g_serverConfig.game_variants = _load_variants(*config["server"]["gamevariants"].as_array());
-    g_serverConfig.map_variants = _load_variants(*config["server"]["mapvariants"].as_array());
-}
 
 
 void Hook_ServerPrintf(char arg1, char arg2, char arg3, char arg4, int64_t arg5, char arg6)
@@ -294,11 +278,102 @@ DWORD WINAPI FixLobbyLC(LPVOID params){
             *magic = 0;
         }
 
+
+        if (sv_fixemptyftl) { 
+            auto ftl_ptr = *reinterpret_cast<uint8_t **>(GetServerVar("lanFTLXuid"));
+            auto magic = reinterpret_cast<uint64_t *>(ftl_ptr + 0xc8);
+
+            if (!engine::networking::SessionMembership::GetInstance()->PeerCount && *magic) {
+                console::log("Peer Count 0 when FTL is set, fixing");
+                UpdateFTL(0);
+            }
+                
+        }
+
         Sleep(100);
     }
 }
 
 
+void RegisterCommands() {
+    command::register_cmd(
+      "sv_setftl", [](const std::vector<std::string> args) { engine::server::UpdateFTL(std::stoull(args[0])); });
+
+     command::register_cmd(
+      "sv_fixemptyftl", [](const std::vector<std::string> args) { sv_fixemptyftl = std::stoi(args[0]); });
+
+    command::register_cmd("setteam", [](const std::vector<std::string> args) {
+        engine::server::UpdateNetworkSessionTeamIdx(std::stoull(args[0]), std::stoi(args[1]));
+    });
+
+    command::register_cmd("map_start", [](const std::vector<std::string> args) { engine::server::StartGame(); });
+    command::register_cmd("map_end", [](const std::vector<std::string> args) { engine::server::EndMode(); });
+    command::register_cmd(
+      "map", [](const std::vector<std::string> args) { engine::server::SetupVariant(args[0], args[1]); });
+    command::register_cmd("hostname", [](const std::vector<std::string> args) {
+        engine::server::g_serverConfig.server_name = args[0];
+    });
+
+
+    command::register_cmd("add_map_variant", [](const std::vector<std::string> args) {
+        engine::server::StartGame(); 
+    });
+
+
+    command::register_cmd("add_map_variant", [](const std::vector<std::string> args) {
+        g_serverConfig.map_variants[args[0]] = Variant{ .asset = args[1], .version = args[2] };
+    });
+
+     command::register_cmd("add_game_variant", [](const std::vector<std::string> args) {
+        g_serverConfig.game_variants[args[0]] = Variant{ .asset = args[1], .version = args[2] };
+    });
+
+    command::register_cmd(
+      "rcon_password", [](const std::vector<std::string> args) { engine::server::g_serverConfig.rcon_password = args[0]; });
+
+
+}
+
+
+void ExecuteConfig(std::string path) {
+    std::ifstream file(path);
+
+    console::log("Executing %s", path.c_str());
+    std::string line;
+
+    while (std::getline(file, line)) {
+        // strip new lines before feeding into command executor
+        line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
+
+        if (line.empty()) { continue; }
+        command::process_command(line);
+    }
+
+
+
+}
+
+
+
+void Init() {
+    console::log("Server Init");
+
+    patches::server::GetServerOpModeFuncTable();
+    g_serverConfig.server_name = "Binfinite Dedicated Server";
+    g_serverConfig.rcon_password = "";
+
+
+    RegisterCommands();
+    InstallHooks();
+
+    // exec server.cfg 
+    ExecuteConfig("./server.cfg");
+
+
+
+
+
+}
 
 
 
@@ -309,6 +384,10 @@ void InstallHooks()
     CreateThread(NULL, 0, FixLobbyLC, NULL, 0, NULL);
     std::uint8_t *module_base = reinterpret_cast<std::uint8_t *>(utils::memory::GetModuleInfo("").lpBaseOfDll);
     sv_frame_info_hook.create(module_base + 0x2506b0c, &Hook_FrameInfo);
+
+
+
+
     //sv_printf_hook.create(module_base + 0x08c9ebc, &Hook_ServerPrintf);
 }
 

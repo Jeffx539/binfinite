@@ -1,4 +1,5 @@
 #include "command.hpp"
+#include "console.hpp"
 #include <algorithm>
 #include <string>
 
@@ -31,42 +32,36 @@ namespace command {
     
     void process_command(const std::string command) {
 
-        std::vector<std::string> arguments;
-        //bool in_arg = false;
+    std::vector<std::string> arguments;
         bool inquote = false;
         unsigned int arg_start = 0;
 
         for (unsigned int i = 0; i < command.length(); i++) {
-
-            if (command[i] == '"') { 
+            if (command[i] == '"') {
                 inquote = !inquote;
                 continue;
             }
 
-            if (command[i] == ' ') {
-
-                if (inquote) {
-                    continue;
-                }
-
-
+            if (command[i] == ' ' && !inquote) {
                 auto str = command.substr(arg_start, i - arg_start);
-                str.erase(std::remove(str.begin(), str.end(), '"'), str.end());
-                str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+                str.erase(std::remove(str.begin(), str.end(), '"'), str.end());// Remove only quotes
                 arguments.push_back(str);
                 arg_start = i + 1;
-
             }
         }
 
         auto str = command.substr(arg_start, command.length());
-        str.erase(std::remove(str.begin(), str.end(), '"'), str.end());
-        str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+        str.erase(std::remove(str.begin(), str.end(), '"'), str.end());// Remove only quotes
         arguments.push_back(str);
 
+        if (arguments.empty()) return;
 
         auto cmd = commands_.find(arguments[0]);
-        if (cmd == commands_.end()) { return; }
+        if (cmd == commands_.end()) {
+            console::log("command not found %s", arguments[0].c_str());
+            return;
+        }
+
         arguments.erase(arguments.begin());
         cmd->second->callback(arguments);
 

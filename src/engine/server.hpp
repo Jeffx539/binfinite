@@ -10,6 +10,9 @@ namespace engine::server {
 
 uint32_t GetTickRate();
 
+void Init();
+void RegisterCommands();
+
 void InstallHooks();
 void StartGame();
 void EndMode();
@@ -51,10 +54,6 @@ struct ServerConfig
 
 
 inline ServerConfig g_serverConfig;
-
-
-
-void  LoadServerConfig(const std::string path);
 
 
 
