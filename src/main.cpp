@@ -118,8 +118,8 @@ void main()
     console::init();
     SetConsoleTitle("Binfinite");
     console::log("Binfinite %s", GIT_DESCRIBE);
-
-    Sleep(500);
+    console::log("Waiting for game to load into memory");
+    Sleep(2000);
 
     auto env = environment::IsServer() ? "SERVER" : "CLIENT";
     console::log("initialising mode: (%s) ...", env);

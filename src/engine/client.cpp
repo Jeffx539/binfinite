@@ -40,7 +40,7 @@ namespace engine::client {
 
     char *GetRTTString()
     {
-        auto addr = GAME_PTR(0x4d3d8f0);
+        auto addr = GAME_PTR(0x04d43970); // mar13
         return reinterpret_cast<char *>(addr);
     }
 
@@ -74,18 +74,14 @@ void Init() {
 
 
 uint64_t GetLobbyActivityState() {
-    auto get_lob_activity_offs = GAME_PTR(0x04eaba8);// mar13
+    auto get_lob_activity_offs = GAME_PTR(0x04f0378);// mar13
     auto get_lob_activity = (int64_t(__stdcall *)())(get_lob_activity_offs);
     return get_lob_activity();
 }
 
 
 void ConnectToServer(std::string ip_addr) {
-
-        auto offs = GAME_PTR(0x2e6c59c); // mar 13
-        auto test = (void(__stdcall *)(int32_t arg1, int32_t arg2, char arg3, char arg4))(offs);
-
-
+    console::log("connect");
         auto connect_to_server_offs = GAME_PTR(0x3541d84); // mar13
         auto connect_to_server = (void(__stdcall *)(uint64_t arg1))(connect_to_server_offs);
 
@@ -101,24 +97,24 @@ void ConnectToServer(std::string ip_addr) {
 
         req_lob_activity(0, 0);
 
-        // bound the loop
-        for (unsigned int i = 0; i < 100; i++) {
-
+        // function is surronded by guards, breaks the main thread.
+   /*     for (unsigned int i = 0; i < 100; i++) {
             if (GetLobbyActivityState() == 2) { break; }
             console::log("Still transitioning");
-            Sleep(100);
-        }
+            Sleep(100); 
+        }*/
 
+        console::log("transition complete");
 
 
         engine::client::AddServerToList("Binfinite Server", sa.sin_addr.s_addr);
-        Sleep(20);
+        //        console::log("add complete");
+
+        //Sleep(20);
         console::log("connecting to id %s", ip_addr.c_str());
         if (can_lan()) {
             connect_to_server(0);
         }
-
-
 }
 
 
